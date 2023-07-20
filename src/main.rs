@@ -2,6 +2,9 @@ use std::path::PathBuf;
 use std::pin::pin;
 use crate::config::{BackendConfig, BackendRef, Config, FrontendConfig};
 use futures::StreamExt;
+use rebo::{FromValue, IntoValue, ReboConfig, ReturnValue};
+use crate::backend::Backend;
+use crate::backend::postgres::PostgresBackend;
 
 mod config;
 mod frontend;
@@ -28,10 +31,10 @@ async fn main() {
     println!("{:#?}", config);
 
     let FrontendConfig::HttpRest(http_rest) = &config.frontend["my-rest"] else { panic!("uff") };
-    let mapper = data::mapper(&config.data["ahoydtu"].values);
+    let mapper = data::mapper::<PostgresBackend>(&config.data["ahoydtu"].values);
     let BackendConfig::Postgres(postgres) = &config.backend["my-postgres"];
-    let BackendRef::Postgres { postgres_table, .. } = &config.data["ahoydtu"].backend;
-    let consumer = backend::postgres::consumer(postgres, postgres_table.clone()).await;
+    let BackendRef::Postgres(postgres_ref) = &config.data["ahoydtu"].backend;
+    let consumer = PostgresBackend::new(postgres, postgres_ref).await;
 
     let stream = frontend::http_rest::stream(http_rest);
     let mapped = stream.map(mapper);
@@ -43,4 +46,11 @@ async fn main() {
     //     println!("{v:#?}");
     // }
     consumed.await
+}
+
+fn run_rebo<T: FromValue + IntoValue>(code: String, value: T) -> T {
+    let config = ReboConfig::new().add_external_value("value".to_string(), value);
+    let res = rebo::run_with_config("processing".to_string(), code, config);
+    let ReturnValue::Ok(value) = res.return_value else { panic!("invalid rebo code") };
+    T::from_value(value)
 }

@@ -69,6 +69,10 @@ pub struct DataConfig {
 #[derive(Debug, Clone, Deserialize)]
 pub struct Value {
     pub pointer: String,
+    /// rebo code taking `value`-string before escaping and returning its replacement-string
+    pub preprocess: Option<String>,
+    /// rebo code taking `value`-string after escaping and returning its replacement-string
+    pub postprocess: Option<String>,
     #[serde(default)]
     pub aggregate: Aggregate,
 }
@@ -86,7 +90,12 @@ pub enum FrontendRef {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
 pub enum BackendRef {
-    Postgres { name: String, postgres_table: String },
+    Postgres(PostgresRef),
+}
+#[derive(Debug, Clone, Deserialize)]
+pub struct PostgresRef {
+    pub name: String,
+    pub postgres_table: String,
 }
 
 
@@ -97,6 +106,8 @@ impl FromStr for Value {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(Value {
             pointer: s.to_string(),
+            preprocess: None,
+            postprocess: None,
             aggregate: Aggregate::default(),
         })
     }

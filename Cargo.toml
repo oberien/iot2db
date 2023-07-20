@@ -16,3 +16,6 @@ futures = "0.3.28"
 reqwest = { version = "0.11.18", features = ["json"] }
 tokio-postgres = "0.7.8"
 postgres-protocol = "0.6.5"
+#rebo = { path = "../rebo/rebo" }
+rebo = { git = "https://github.com/oberien/rebo", rev = "0dc98de10313f0cdf6b7c60dfca78589acc5a262" }
+async-trait = "0.1.71"
