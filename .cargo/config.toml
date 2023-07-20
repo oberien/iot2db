@@ -1,0 +1,2 @@
+[env]
+IOT2DB_CONFIG_FILE = "iot2db.toml"

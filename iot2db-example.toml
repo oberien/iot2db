@@ -1,0 +1,29 @@
+[frontend.my-rest]
+type = "http-rest"
+url = "https://foo.bar/baz?qux=corge"
+#basic_auth = { username = "", password = "" }
+frequency_secs = 10
+
+[frontend.my-mqtt]
+type = "mqtt"
+host = "localhost"
+#port = 1883
+#username = ""
+#password = ""
+
+[backend.my-postgres]
+type = "postgres"
+host = "localhost"
+#port = 5432
+database = "telemetry"
+username = "telemetry"
+#password = ""
+
+[data.ahoydtu]
+frontend.name = "my-rest"
+backend.name = "my-postgres"
+backend.postgres_table = "ahoydtu"
+#persistent_every_secs = 120
+#clean_non_persistent_after_secs = 86400 # 1 day
+value.ac_voltage = { pointer = "/inverter/0/ch/0/0" }
+value.ac_current = "/inverter/0/ch/0/1"
