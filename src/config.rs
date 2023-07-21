@@ -40,8 +40,12 @@ pub struct MqttConfig {
     pub host: String,
     #[serde(default = "default_mqtt_port")]
     pub port: u16,
-    pub username: Option<String>,
-    pub password: Option<String>,
+    pub auth: Option<MqttAuth>,
+}
+#[derive(Debug, Clone, Deserialize)]
+pub struct MqttAuth {
+    pub username: String,
+    pub password: String,
 }
 
 // backends

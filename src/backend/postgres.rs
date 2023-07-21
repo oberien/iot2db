@@ -1,22 +1,17 @@
 use std::collections::HashMap;
+use futures::Sink;
 use postgres_protocol::escape::{escape_identifier, escape_literal};
+use tokio::sync::mpsc::UnboundedSender;
 use tokio_postgres::{Client, Config, NoTls};
-use crate::backend::Backend;
+use crate::backend::Escaper;
 use crate::config::{PostgresConfig, PostgresRef};
 
 pub struct PostgresBackend {
-    client: Client,
-    table: String,
+    insert_tx: UnboundedSender<Insert>,
 }
 
-#[async_trait::async_trait]
-impl Backend for PostgresBackend {
-    type Config = PostgresConfig;
-    type Ref = PostgresRef;
-
-    async fn new(config: &Self::Config, r: &Self::Ref) -> Self {
-        let table = r.postgres_table.clone();
-        assert!(!table.contains('"'), "table name {:?} must not contain `\"`", table);
+impl PostgresBackend {
+    pub async fn new(config: PostgresConfig) -> Self {
         let mut pgcfg = Config::new();
         pgcfg.host(&config.host)
             .port(config.port)
@@ -28,32 +23,62 @@ impl Backend for PostgresBackend {
         let (client, connection) = pgcfg.connect(NoTls).await
             .expect("can't open postgres connection");
         tokio::spawn(connection);
-        PostgresBackend { client, table }
+        let (insert_tx, mut insert_rx) = tokio::sync::mpsc::unbounded_channel();
+        tokio::spawn(async move {
+            while let Some(Insert { table, escaped_values }) = insert_rx.recv().await {
+                insert(&client, &table, &escaped_values).await;
+            }
+        });
+        PostgresBackend { insert_tx }
     }
 
-    async fn consume(&self, escaped_values: HashMap<&str, String>) {
-        let mut fmt = format!("INSERT INTO {} (", escape_identifier(&self.table));
-        for column in escaped_values.keys() {
-            fmt.push_str(&escape_identifier(column));
-            fmt.push(',');
-        }
-        assert_eq!(fmt.pop(), Some(','));
-
-        fmt.push_str(") VALUES (");
-        for value in escaped_values.values() {
-            fmt.push_str(value);
-            fmt.push(',');
-        }
-        assert_eq!(fmt.pop(), Some(','));
-        fmt.push_str(") ON CONFLICT DO NOTHING");
-
-        eprintln!("{fmt}");
-
-        self.client.execute(&fmt, &[]).await
-            .expect("cannot insert into postgres");
+    pub fn sink(&self, pgref: PostgresRef) -> impl Sink<HashMap<String, String>, Error = ()> + Send + 'static {
+        let insert_tx = self.insert_tx.clone();
+        let table = pgref.postgres_table.clone();
+        futures::sink::unfold((), move |(), escaped_values| {
+            let insert_tx = insert_tx.clone();
+            let table = table.clone();
+            async move {
+                insert_tx.send(Insert {
+                    table,
+                    escaped_values,
+                }).unwrap();
+                Ok(())
+            }
+        })
     }
+}
 
-    fn escape_value(value: String) -> String {
+pub struct PostgresEscaper;
+impl Escaper for PostgresEscaper {
+    fn escape_value(&self, value: String) -> String {
         escape_literal(&value)
     }
+}
+
+async fn insert(client: &Client, table: &str, escaped_values: &HashMap<String, String>) {
+    let mut fmt = format!("INSERT INTO {} (", escape_identifier(table));
+    for column in escaped_values.keys() {
+        fmt.push_str(&escape_identifier(column));
+        fmt.push(',');
+    }
+    assert_eq!(fmt.pop(), Some(','));
+
+    fmt.push_str(") VALUES (");
+    for value in escaped_values.values() {
+        fmt.push_str(value);
+        fmt.push(',');
+    }
+    assert_eq!(fmt.pop(), Some(','));
+    fmt.push_str(") ON CONFLICT DO NOTHING");
+
+    eprintln!("{fmt}");
+
+    client.execute(&fmt, &[]).await
+        .expect("cannot insert into postgres");
+}
+
+struct Insert {
+    table: String,
+    escaped_values: HashMap<String, String>,
 }
