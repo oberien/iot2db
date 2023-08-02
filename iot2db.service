@@ -1,0 +1,12 @@
+[Unit]
+Description=iot2db
+Requires=postgresql.service
+After=postgresql.service
+
+[Service]
+Environment="RUST_BACKTRACE=full"
+Environment="IOT2DB_CONFIG_FILE=/etc/iot2db.toml"
+ExecStart=/usr/local/bin/iot2db
+
+[Install]
+WantedBy=multi-user.target

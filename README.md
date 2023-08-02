@@ -1,5 +1,30 @@
 # iot2db
 
+A service to fetch data from MQTT or a REST API and store it in a database
+(e.g. for later visualization with Grafana).
+
+Currently supported:
+* Frontends
+    * HTTP REST
+    * MQTT
+* Backends:
+    * PostgreSQL
+
+## Installation
+
+* requires an installation of rust (see <https://rustup.rs>)
+    ```sh
+    make
+    sudo make install
+    ```
+* uninstall using `sudo make uninstall`
+    * keeps the config file `/etc/iot2db.toml` - delete manually if wanted
+
+## Configuration
+
+* config File: `/etc/iot2db.toml`
+* see `device-examples/` for setup and configuration examples of different devices
+
 # License
 
 Licensed under either of

@@ -15,10 +15,10 @@ mod backend;
 async fn main() {
     let config_path = match std::env::var("IOT2DB_CONFIG_FILE") {
         Ok(file) => PathBuf::from(file),
-        Err(_) => xdg::BaseDirectories::with_prefix("iot2db")
-            .expect("can't init xdg_dirs")
-            .find_config_file("iot2db.toml")
-            .expect("no config file `iot2db.toml` found"),
+        Err(_) => {
+            eprintln!("no config file passed via IOT2DB_CONFIG_FILE environment variable");
+            return;
+        }
     };
     let config_path = config_path.canonicalize()
         .expect("can't canonicalize config path");
