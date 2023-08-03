@@ -1,9 +1,12 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::sync::Arc;
+use std::time::Duration;
 use futures::StreamExt;
 use crate::config::{BackendConfig, BackendRef, Config, FrontendConfig, FrontendRef};
 use rebo::{FromValue, IntoValue, ReboConfig, ReturnValue};
-use crate::backend::postgres::{PostgresBackend, PostgresEscaper};
+use crate::backend::{Backend, DataToInsert};
+use crate::backend::postgres::PostgresBackend;
 use crate::frontend::mqtt::MqttFrontend;
 
 mod config;
@@ -48,6 +51,7 @@ async fn main() {
 
     let mut spawn_handles = Vec::new();
     for (data_name, data) in config.data {
+        // get frontend stream
         let stream = match data.frontend {
             FrontendRef::HttpRest { name } => {
                 let frontend = rest_frontends.get(&name)
@@ -61,17 +65,47 @@ async fn main() {
             }
         };
 
-        let (sink, escaper) = match data.backend {
+        // get backend sink
+        let (inserter, escaper) = match data.backend {
             BackendRef::Postgres(pgref) => {
                 let backend = pg_backends.get(&pgref.name)
                     .unwrap_or_else(|| panic!("unknown postgres backend {:?} for data {:?}", pgref.name, data_name));
-                (backend.sink(pgref), PostgresEscaper)
+                let inserter = backend.inserter(pgref).await;
+                let escaper = backend.escaper().await;
+
+                // periodic deletions of non-permanent data
+                let inserter2 = Arc::clone(&inserter);
+                if let Some(days) = data.clean_non_persistent_after_days {
+                    // don't register join handle as this can just die
+                    tokio::spawn(async move {
+                        // once a day
+                        let mut interval = tokio::time::interval(Duration::from_secs(60 * 60 * 24));
+                        loop {
+                            eprintln!("inside loop");
+                            interval.tick().await;
+                            eprintln!("interval ticked");
+                            inserter2.delete_old_non_persistent(days).await;
+                        }
+                    });
+                }
+
+                // sink for pipeline
+                (inserter, escaper)
             }
         };
 
+        // get value- / data mapper
         let mapper = data::mapper(data.values, escaper);
 
-        let handle = tokio::spawn(stream.map(mapper).map(|x| Result::<_, ()>::Ok(x)).forward(sink));
+        // pipe everything into another
+        let future = stream
+            .map(mapper)
+            .map(move |values| DataToInsert { escaped_values: values, persistent_every_secs: data.persistent_every_secs })
+            .for_each(move |data| {
+                let inserter = Arc::clone(&inserter);
+                async move { inserter.insert(data).await }
+            });
+        let handle = tokio::spawn(future);
         spawn_handles.push(handle);
     }
 

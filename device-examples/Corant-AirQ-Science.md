@@ -90,7 +90,8 @@ REVOKE CONNECT ON DATABASE airq FROM PUBLIC;
 -- Create Tables
 SET ROLE airq;
 CREATE TABLE IF NOT EXISTS measurements (
-    timestamp timestamp with time zone PRIMARY KEY NOT NULL,
+    timestamp timestamp with time zone NOT NULL,
+    persistent bool NOT NULL DEFAULT false,
     health float8 NOT NULL,
     performance float8 NOT NULL,
     tvoc float8,
@@ -108,8 +109,11 @@ CREATE TABLE IF NOT EXISTS measurements (
     pm10 float8 NOT NULL,
     oxygen float8 NOT NULL,
     o3 float8,
-    so2 float8
-);
+    so2 float8,
+    PRIMARY KEY (timestamp, persistent)
+) PARTITION BY LIST(persistent);
+CREATE TABLE measurements_persistent PARTITION OF measurements FOR VALUES IN (true);
+CREATE TABLE measurements_nonpersistent PARTITION OF measurements FOR VALUES IN (false);
 ```
 
 ## Configuration of iot2db
@@ -135,6 +139,8 @@ frontend.name = "mqtt"
 frontend.mqtt_topic = "Your_Topic"
 backend.name = "postgres-airq"
 backend.postgres_table = "measurements"
+persistent_every_secs = 120
+clean_non_persistent_after_days = 7
 values.timestamp = { pointer = "/timestamp", preprocess = 'f"{value.parse_int().unwrap()/1000}"', postprocess = 'f"to_timestamp({value})"' }
 values.health = "/health"
 values.performance = "/performance"
@@ -153,5 +159,5 @@ values.pm2_5 = "/pm2_5/0"
 values.pm10 = "/pm10/0"
 values.oxygen = "/oxygen/0"
 values.o3 = "/o3/0"
-values.so2 = "/health/0"
+values.so2 = "/so2/0"
 ```

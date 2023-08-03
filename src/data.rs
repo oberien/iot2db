@@ -1,11 +1,12 @@
-use std::collections::HashMap;
+use std::sync::Arc;
+use indexmap::IndexMap;
 use crate::{config, run_rebo};
-use crate::backend::Escaper;
+use crate::backend::BackendEscaper;
 
-pub fn mapper(values: HashMap<String, config::Value>, escaper: impl Escaper + 'static) -> impl Fn(serde_json::Value) -> HashMap<String, String> + 'static {
+pub fn mapper(values: IndexMap<String, config::Value>, escaper: Arc<dyn BackendEscaper + Send + Sync + 'static>) -> impl Fn(serde_json::Value) -> IndexMap<String, String> + 'static {
     move |value| {
         let values = values.clone();
-        let mut map = HashMap::with_capacity(values.len());
+        let mut map = IndexMap::with_capacity(values.len());
         for (key, pointer) in values {
             if let Some(val) = value.pointer(&pointer.pointer) {
                 let val = val.to_string();

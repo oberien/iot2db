@@ -23,12 +23,13 @@ username = "telemetry"
 frontend.name = "my-rest"
 backend.name = "my-postgres"
 backend.postgres_table = "ahoydtu"
+# persistence / non-persistence requires a "timestamp" column and a "persistent" bool column
 #persistent_every_secs = 120
-#clean_non_persistent_after_secs = 86400 # 1 day
+#clean_non_persistent_after_days = 14
 # preprocess before backend-escaping, postprocess after backend-escaping
 values.timestamp = { pointer = "/inverter/0/ts_last_success", postprocess = 'f"to_timestamp({value})"' }
-value.ac_voltage = { pointer = "/inverter/0/ch/0/0" }
-value.ac_current = "/inverter/0/ch/0/1"
+values.ac_voltage = { pointer = "/inverter/0/ch/0/0" }
+values.ac_current = "/inverter/0/ch/0/1"
 
 [data.tasmota]
 frontend.name = "my-mqtt"

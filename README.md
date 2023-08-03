@@ -17,13 +17,12 @@ Currently supported:
     make
     sudo make install
     ```
+* edit the config file `/etc/iot2db.toml`
+    * see `device-examples/` for setup and configuration examples of different devices
+* `systemctl enable iot2db`
+* `systemctl start iot2db`
 * uninstall using `sudo make uninstall`
     * keeps the config file `/etc/iot2db.toml` - delete manually if wanted
-
-## Configuration
-
-* config File: `/etc/iot2db.toml`
-* see `device-examples/` for setup and configuration examples of different devices
 
 # License
 

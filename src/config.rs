@@ -1,14 +1,14 @@
-use std::collections::HashMap;
 use std::convert::Infallible;
 use std::str::FromStr;
+use indexmap::IndexMap;
 use serde::Deserialize;
 use serde_with::serde_as;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
-    pub frontend: HashMap<String, FrontendConfig>,
-    pub backend: HashMap<String, BackendConfig>,
-    pub data: HashMap<String, DataConfig>,
+    pub frontend: IndexMap<String, FrontendConfig>,
+    pub backend: IndexMap<String, BackendConfig>,
+    pub data: IndexMap<String, DataConfig>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -66,9 +66,9 @@ pub struct DataConfig {
     pub frontend: FrontendRef,
     pub backend: BackendRef,
     pub persistent_every_secs: Option<u32>,
-    pub clean_non_persistent_after_secs: Option<u32>,
-    #[serde_as(as = "HashMap<_, serde_with::PickFirst<(serde_with::DisplayFromStr, _)>>")]
-    pub values: HashMap<String, Value>,
+    pub clean_non_persistent_after_days: Option<u32>,
+    #[serde_as(as = "IndexMap<_, serde_with::PickFirst<(serde_with::DisplayFromStr, _)>>")]
+    pub values: IndexMap<String, Value>,
 }
 #[derive(Debug, Clone, Deserialize)]
 pub struct Value {

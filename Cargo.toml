@@ -9,13 +9,15 @@ edition = "2021"
 serde_json = "1.0.96"
 toml = "0.7.4"
 serde = { version = "1.0.163", features = ["derive"] }
-serde_with = "3.0.0"
+serde_with = { version = "3.0.0", features = ["indexmap"] }
 tokio = { version = "1.28.2", features = ["full"] }
 tokio-stream = "0.1.14"
 futures = "0.3.28"
+async-trait = "0.1.72"
 reqwest = { version = "0.11.18", features = ["json"] }
 tokio-postgres = "0.7.8"
 postgres-protocol = "0.6.5"
 #rebo = { path = "../rebo/rebo" }
 rebo = { git = "https://github.com/oberien/rebo", rev = "323443219221beb4305129b3a6f4d54ec03b1872" }
 rumqttc = "0.22.0"
+indexmap = "1.9.3"
