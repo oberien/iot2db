@@ -8,7 +8,7 @@ pub fn stream(config: HttpRestConfig) -> impl Stream<Item = Value> + 'static {
         .timeout(Duration::from_secs(10))
         .build()
         .expect("can't build reqwest client");
-    futures::stream::unfold(0, move |iteration| {
+    futures::stream::unfold(0, move |mut iteration| {
         let client = client.clone();
         let config = config.clone();
         async move {
@@ -16,7 +16,7 @@ pub fn stream(config: HttpRestConfig) -> impl Stream<Item = Value> + 'static {
                 if iteration != 0 {
                     tokio::time::sleep(Duration::from_secs(config.frequency_secs as u64)).await;
                 }
-                let iteration = iteration + 1;
+                iteration += 1;
                 let mut req = client.get(&config.url);
                 if let Some(auth) = &config.basic_auth {
                     req = req.basic_auth(&auth.username, auth.password.as_ref());
