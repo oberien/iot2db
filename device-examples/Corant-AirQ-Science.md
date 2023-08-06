@@ -1,5 +1,10 @@
 # AirQ Science
 
+Frontend | Backend | Table Layout
+--- | --- | ---
+mqtt | postgres | wide
+
+AirQ is an air quality measurement device with lots of different sensors.
 The AirQ Science (and only science) supports MQTT.
 
 ## References
@@ -121,7 +126,7 @@ CREATE TABLE measurements_nonpersistent PARTITION OF measurements FOR VALUES IN 
 ```toml
 [frontend.mqtt]
 type = "mqtt"
-host = "10.3.22.203"
+host = "IP.OF.MQTT.BROKER"
 #port = 1883
 #username = ""
 #password = ""
