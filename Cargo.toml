@@ -11,7 +11,7 @@ toml = "0.7.4"
 serde = { version = "1.0.163", features = ["derive"] }
 serde_with = { version = "3.0.0", features = ["indexmap"] }
 tokio = { version = "1.28.2", features = ["full"] }
-tokio-stream = "0.1.14"
+tokio-stream = { version = "0.1.14", features = ["sync"] }
 futures = "0.3.28"
 async-trait = "0.1.72"
 reqwest = { version = "0.11.18", features = ["json"] }
