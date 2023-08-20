@@ -81,9 +81,7 @@ async fn main() {
                         // once a day
                         let mut interval = tokio::time::interval(Duration::from_secs(60 * 60 * 24));
                         loop {
-                            eprintln!("inside loop");
                             interval.tick().await;
-                            eprintln!("interval ticked");
                             inserter2.delete_old_non_persistent(days).await;
                         }
                     });
