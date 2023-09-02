@@ -21,3 +21,7 @@ postgres-protocol = "0.6.5"
 rebo = { git = "https://github.com/oberien/rebo", rev = "4595526e4dd9b6f3ede6b9964446163edc1fa9a7" }
 rumqttc = "0.22.0"
 indexmap = "1.9.3"
+html5ever = "0.26.0"
+markup5ever_rcdom = "0.2.0"
+once_cell = "1.17.2"
+regex = "1.8.3"
