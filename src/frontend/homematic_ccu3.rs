@@ -42,7 +42,7 @@ pub fn stream<T: Borrow<config::Value>>(config: HomematicCcu3Config, accessed_va
         let config = Arc::clone(&config);
         let parametersets_to_load = Arc::clone(&parametersets_to_load);
         async move {
-            loop {
+            'repeat: loop {
                 if iteration != 0 {
                     tokio::time::sleep(Duration::from_secs(config.frequency_secs as u64)).await;
                 }
@@ -118,6 +118,7 @@ pub fn stream<T: Borrow<config::Value>>(config: HomematicCcu3Config, accessed_va
                                     Some(Err(e)) => {
                                         eprintln!("homematic-ccu3: Error executing Interface.getParamset MASTER: {e}");
                                         channel.insert("master".to_string(), json!({ "NOT_LOADED": "Error loading" }));
+                                        return Err(())
                                     },
                                     None => (),
                                 }
@@ -126,14 +127,24 @@ pub fn stream<T: Borrow<config::Value>>(config: HomematicCcu3Config, accessed_va
                                     Some(Err(e)) => {
                                         eprintln!("homematic-ccu3: Error executing Interface.getParamset VALUES: {e}");
                                         channel.insert("master".to_string(), json!({ "NOT_LOADED": "Error loading" }));
+                                        return Err(())
                                     },
                                     None => (),
                                 }
+                                Ok(())
                             }));
                     }
                 }
 
-                while let Some(_) = channel_futures.next().await {}
+                while let Some(res) = channel_futures.next().await {
+                    match res {
+                        Ok(()) => (),
+                        Err(()) => {
+                            eprintln!("homematic-ccu3: error fetching values - retry");
+                            continue 'repeat
+                        },
+                    }
+                }
                 drop(channel_futures);
 
                 let devices = devices.into_iter()
