@@ -101,7 +101,7 @@ async fn insert(
     if let Some(persistent_every_secs) = persistent_every_secs {
         let current_timestamp = &escaped_values["timestamp"];
         fmt.push_str(&format!(
-            "(SELECT max(\"timestamp\") + INTERVAL '{persistent_every_secs} SECONDS' <= {current_timestamp} FROM {escaped_table} where persistent),"
+            "(SELECT COALESCE(max(\"timestamp\") + INTERVAL '{persistent_every_secs} SECONDS' <= {current_timestamp}, true) FROM {escaped_table} where persistent),"
         ));
     }
     for value in escaped_values.values() {

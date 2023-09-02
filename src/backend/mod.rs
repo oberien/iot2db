@@ -27,3 +27,11 @@ pub trait BackendInserter {
 pub trait BackendEscaper {
     fn escape_value(&self, value: String) -> String;
 }
+
+pub struct NoopEscaper;
+
+impl BackendEscaper for NoopEscaper {
+    fn escape_value(&self, value: String) -> String {
+        value
+    }
+}

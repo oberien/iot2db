@@ -6,8 +6,11 @@ use serde_with::serde_as;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
+    #[serde(default)]
     pub frontend: IndexMap<String, FrontendConfig>,
+    #[serde(default)]
     pub backend: IndexMap<String, BackendConfig>,
+    #[serde(default)]
     pub data: IndexMap<String, DataConfig>,
 }
 
@@ -15,6 +18,7 @@ pub struct Config {
 #[serde(tag = "type", rename_all = "kebab-case")]
 pub enum FrontendConfig {
     HttpRest(HttpRestConfig),
+    HomematicCcu3(HomematicCcu3Config),
     Mqtt(MqttConfig),
 }
 #[derive(Debug, Clone, Deserialize)]
@@ -29,6 +33,14 @@ pub struct HttpRestConfig {
     pub url: String,
     pub basic_auth: Option<BasicAuth>,
     pub frequency_secs: u32,
+}
+#[derive(Debug, Clone, Deserialize)]
+pub struct HomematicCcu3Config {
+    pub url: String,
+    pub basic_auth: Option<BasicAuth>,
+    pub frequency_secs: u32,
+    pub username: String,
+    pub password: String,
 }
 #[derive(Debug, Clone, Deserialize)]
 pub struct BasicAuth {
@@ -86,10 +98,15 @@ pub enum Aggregate {
     IncrementingValueWhichMayReset,
 }
 #[derive(Debug, Clone, Deserialize)]
+pub struct FrontendRef {
+    pub name: String,
+    #[serde(flatten)]
+    pub data: Option<FrontendRefData>,
+}
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(untagged)]
-pub enum FrontendRef {
-    Mqtt { name: String, mqtt_topic: String },
-    HttpRest { name: String },
+pub enum FrontendRefData {
+    Mqtt { mqtt_topic: String },
 }
 #[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
