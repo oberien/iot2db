@@ -5,7 +5,7 @@ use std::time::Duration;
 use futures::StreamExt;
 use crate::config::{BackendConfig, BackendRef, Config, FrontendConfig, FrontendRefData};
 use rebo::{FromValue, IntoValue, ReboConfig, ReturnValue};
-use crate::backend::{Backend, DataToInsert, NoopEscaper};
+use crate::backend::{Backend, DataToInsert};
 use crate::backend::postgres::PostgresBackend;
 use crate::frontend::mqtt::MqttFrontend;
 
