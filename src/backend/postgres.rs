@@ -112,6 +112,8 @@ async fn insert(
     fmt.push_str(") ON CONFLICT DO NOTHING");
 
     eprintln!("{fmt}");
-    client.execute(&fmt, &[]).await
-        .expect("cannot insert into postgres");
+    match client.execute(&fmt, &[]).await {
+        Ok(_) => (),
+        Err(e) => eprintln!("cannot insert into postgres: {e}"),
+    }
 }
