@@ -3,11 +3,11 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 use futures::StreamExt;
-use crate::config::{BackendConfig, BackendRef, Config, FrontendConfig, FrontendRefData};
+use crate::config::{BackendConfig, BackendRef, Config};
 use rebo::{FromValue, IntoValue, ReboConfig, ReturnValue};
 use crate::backend::{Backend, DataToInsert};
 use crate::backend::postgres::PostgresBackend;
-use crate::frontend::mqtt::MqttFrontend;
+use crate::frontend::Frontends;
 
 mod config;
 mod frontend;
@@ -33,15 +33,6 @@ async fn main() {
 
     println!("{:#?}", config);
 
-    // let cfg = match config.frontend["homematic"].clone() {
-    //     FrontendConfig::HomematicCcu3(c) => c,
-    //     _ => unreachable!(),
-    // };
-    // let data = config.data["homematic"].clone();
-    // let foo = frontend::homematic_ccu3::stream(cfg, data.values.values());
-    // let mapper = data::mapper(data.values.clone(), Arc::new(NoopEscaper));
-    // foo.map(mapper).for_each(|value| async move { println!("{value:#?}") }).await;
-
     let mut pg_backends = HashMap::new();
     for (name, config) in config.backend {
         match config {
@@ -49,41 +40,15 @@ async fn main() {
         }
     }
 
-    let mut rest_frontends = HashMap::new();
-    let mut hmccu_frontends = HashMap::new();
-    let mut mqtt_frontends = HashMap::new();
+    let mut frontends = Frontends::new();
     for (name, config) in config.frontend {
-        match config {
-            FrontendConfig::HttpRest(rest) => assert!(rest_frontends.insert(name.clone(), rest).is_none(), "duplicate definition of rest frontend {:?}", name),
-            FrontendConfig::HomematicCcu3(hmccu) => assert!(hmccu_frontends.insert(name.clone(), hmccu).is_none(), "duplicate definition of homematic-ccu3 frontend {:?}", name),
-            FrontendConfig::Mqtt(mqtt) => assert!(mqtt_frontends.insert(name.clone(), MqttFrontend::new(&mqtt).await).is_none(), "duplicate definition of mqtt frontend {:?}", name),
-        }
+        frontends.add(name, config).await;
     }
 
     let mut spawn_handles = Vec::new();
     for (data_name, data) in config.data {
         // get frontend stream
-        let rest = rest_frontends.get(&data.frontend.name);
-        let hm = hmccu_frontends.get(&data.frontend.name);
-        let mqtt = mqtt_frontends.get(&data.frontend.name);
-        let stream = match (rest, hm, mqtt) {
-            (Some(rest), None, None) => {
-                assert_eq!(data.frontend.data, None);
-                frontend::http_rest::stream(rest.clone()).boxed()
-            }
-            (None, Some(hm), None) => {
-                assert_eq!(data.frontend.data, None);
-                frontend::homematic_ccu3::stream(hm.clone(), data.values.values()).boxed()
-            }
-            (None, None, Some(mqtt)) => {
-                let Some(FrontendRefData::Mqtt { mqtt_topic }) = data.frontend.data else {
-                    panic!("Usage of MQTT frontend {} requires data {} to provide mqtt_topic", data.frontend.name, data_name)
-                };
-                mqtt.subscribe(mqtt_topic).await.boxed()
-            }
-            (None, None, None) => panic!("unknown frontend {} for data {}", data.frontend.name, data_name),
-            (_, _, _) => panic!("frontend {} used by data {} defined multiple times", data.frontend.name, data_name),
-        };
+        let stream = frontends.stream(data.frontend, data.values.values()).await;
 
         // get backend sink
         let (inserter, escaper) = match data.backend {
