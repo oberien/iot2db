@@ -7,6 +7,8 @@ Currently supported:
 * Frontends
     * HTTP REST
     * MQTT
+    * Homematic CCU3
+    * Shell commands
 * Backends:
     * PostgreSQL
 
