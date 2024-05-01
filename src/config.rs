@@ -111,7 +111,15 @@ pub enum FrontendRefData {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
 pub enum BackendRef {
+    // `{ "name": "stdout" }`
+    Stdout(StdoutRef),
     Postgres(PostgresRef),
+}
+#[derive(Debug, Clone, Deserialize)]
+#[serde(tag = "name")]
+pub enum StdoutRef {
+    #[serde(rename = "stdout")]
+    Stdout,
 }
 #[derive(Debug, Clone, Deserialize)]
 pub struct PostgresRef {

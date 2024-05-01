@@ -35,3 +35,32 @@ impl BackendEscaper for NoopEscaper {
         value
     }
 }
+
+pub struct Stdout(());
+
+#[async_trait::async_trait]
+impl Backend for Stdout {
+    type Config = ();
+    type Ref = ();
+
+    async fn new(_: ()) -> Self {
+        Stdout(())
+    }
+    async fn escaper(&self) -> Arc<dyn BackendEscaper + Send + Sync + 'static> {
+        Arc::new(NoopEscaper)
+    }
+    async fn inserter(&self, _: ()) -> Arc<dyn BackendInserter + Send + Sync + 'static> {
+        Arc::new(StdoutInserter(()))
+    }
+}
+struct StdoutInserter(());
+#[async_trait::async_trait]
+impl BackendInserter for StdoutInserter {
+    async fn insert(&self, data: DataToInsert) {
+        println!("{:#?}", data.escaped_values);
+    }
+
+    async fn delete_old_non_persistent(&self, _: u32) {
+        // we don't store anything; we just print to stdout -> noop
+    }
+}

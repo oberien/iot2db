@@ -5,7 +5,7 @@ use std::time::Duration;
 use futures::StreamExt;
 use crate::config::{BackendConfig, BackendRef, Config};
 use rebo::{FromValue, IntoValue, ReboConfig, ReturnValue};
-use crate::backend::{Backend, DataToInsert};
+use crate::backend::{Backend, DataToInsert, Stdout};
 use crate::backend::postgres::PostgresBackend;
 use crate::frontend::Frontends;
 
@@ -51,7 +51,11 @@ async fn main() {
         let stream = frontends.stream(data.frontend, data.values.values()).await;
 
         // get backend sink
-        let (inserter, escaper) = match data.backend {
+        let (escaper, inserter) = match data.backend {
+            BackendRef::Stdout(_) => {
+                let stdout = Stdout::new(()).await;
+                (stdout.escaper().await, stdout.inserter(()).await)
+            }
             BackendRef::Postgres(pgref) => {
                 let backend = pg_backends.get(&pgref.name)
                     .unwrap_or_else(|| panic!("unknown postgres backend {:?} for data {:?}", pgref.name, data_name));
@@ -73,7 +77,7 @@ async fn main() {
                 }
 
                 // sink for pipeline
-                (inserter, escaper)
+                (escaper, inserter)
             }
         };
 
