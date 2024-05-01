@@ -14,10 +14,113 @@ HTTP setup for a self-hosted RaspberryMatic / Homematic CCU3.
 
 * create a new user "iot2db" with permissions "User"
 
-## Example Response
+## Setup Postgres
 
+```sql
+-- Create User
+CREATE USER homematic;
+-- Create Database
+CREATE DATABASE homematic OWNER homematic;
+REVOKE CONNECT ON DATABASE homematic FROM PUBLIC;
+-- connect to db
+\c homematic
+-- Create Tables
+SET ROLE homematic;
+CREATE TABLE IF NOT EXISTS measurements (
+    timestamp timestamp with time zone NOT NULL,
+    persistent bool NOT NULL,
+    thermostat_voltage float4 NOT NULL,
+    thermostat_rssi int2 NOT NULL,
+    thermostat_temp float4 NOT NULL,
+    thermostat_desired_temp float4 NOT NULL,
+    thermostat_valve float4 NOT NULL,
+    thermostat_window_open bool NOT NULL,
+    window_voltage float4 NOT NULL,
+    window_rssi int2 NOT NULL,
+    window_open bool NOT NULL,
+    weather_rssi int2 NOT NULL,
+    weather_temp float4 NOT NULL,
+    weather_humidity int2 NOT NULL,
+    weather_illumination float4 NOT NULL,
+    weather_raining bool NOT NULL,
+    weather_rain float4 NOT NULL,
+    weather_sunshine_duration int2 NOT NULL,
+    weather_wind_dir float4 NOT NULL,
+    weather_wind_dir_range float4 NOT NULL,
+    weather_wind_speed float4 NOT NULL,
+    PRIMARY KEY (timestamp, persistent)
+) PARTITION BY LIST(persistent);
+CREATE TABLE measurements_persistent PARTITION OF measurements FOR VALUES IN (true);
+CREATE TABLE measurements_nonpersistent PARTITION OF measurements FOR VALUES IN (false);
+```
+
+## Configuration of iot2db
+
+```toml
+[frontend.homematic]
+type = "homematic-ccu3"
+url = "https://ccu3-url"
+#basic_auth = { username = "", password = "" }
+frequency_secs = 10
+username = "iot2db"
+password = "MyPassword"
+
+[backend.postgres-homematic]
+type = "postgres"
+host = "localhost"
+#port = 5432
+database = "homematic"
+username = "homematic"
+#password = ""
+
+[data.homematic]
+frontend.name = "homematic"
+backend.name = "postgres-pv"
+backend.postgres_table = "measurements"
+persistent_every_secs = 120
+clean_non_persistent_after_days = 7
+values.timestamp = { pointer = "/nonexistent", postprocess = '"CURRENT_TIMESTAMP"' }
+values.thermostat_voltage = "/Thermostat 1/channels/0/values/OPERATING_VOLTAGE"
+values.thermostat_rssi = "/Thermostat 1/channels/0/values/RSSI_DEVICE"
+values.thermostat_temp = "/Thermostat 1/channels/1/values/ACTUAL_TEMPERATURE"
+values.thermostat_desired_temp = "/Thermostat 1/channels/1/values/SET_POINT_TEMPERATURE"
+values.thermostat_valve = "/Thermostat 1/channels/1/values/LEVEL"
+values.thermostat_window_open = "/Thermostat 1/channels/1/values/WINDOW_STATE"
+values.window_voltage = "/Window 1/channels/0/values/OPERATING_VOLTAGE"
+values.window_rssi = "/Window 1/channels/0/values/RSSI_DEVICE"
+values.window_open = "/Window 1/channels/1/values/STATE"
+values.weather_rssi = "/Weather/channels/0/values/RSSI_DEVICE"
+values.weather_temp = "/Weather/channels/1/values/ACTUAL_TEMPERATURE"
+values.weather_humidity = "/Weather/channels/1/values/HUMIDITY"
+values.weather_illumination = "/Weather/channels/1/values/ILLUMINATION"
+values.weather_raining = "/Weather/channels/1/values/RAINING"
+values.weather_rain = "/Weather/channels/1/values/RAIN_COUNTER"
+values.weather_sunshine_duration = "/Weather/channels/1/values/SUNSHINEDURATION"
+values.weather_wind_dir = "/Weather/channels/1/values/WIND_DIR"
+values.weather_wind_dir_range = "/Weather/channels/1/values/WIND_DIR_RANGE"
+values.weather_wind_speed = "/Weather/channels/1/values/WIND_SPEED"
+```
+
+## Example Responses
+
+**Tip:** If you want to print everything, use something like the following config:
+```toml
+[frontend.homematic]
+...
+[data.homematic]
+frontend.name = "homematic"
+backend.name = "stdout"
+values.all = ""
+# load all values and master data
+values.foo0 = "/Thermostat 1/channels/0/values"
+values.bar0 = "/Thermostat 1/channels/0/master"
+values.foo1 = "/Thermostat 1/channels/1/values"
+values.bar1 = "/Thermostat 1/channels/1/master"
+```
+
+**Thermostat:**
 ```json
-[{
+{"Thermostat 1": {
   "address": "000A1234567890",
   "channels": [
     {
@@ -153,173 +256,52 @@ HTTP setup for a self-hosted RaspberryMatic / Homematic CCU3.
   "name": "Thermostat 1",
   "operateGroupOnly": "false",
   "type": "HmIP-eTRV-2"
-},{
-  "address": "00AB1234567890",
+}}
+```
+
+**Window Contact (trimmed):**
+```json
+{"Window 1": {
   "channels": [
     {
-      "address": "00AB1234567890:0",
-      "category": "CATEGORY_NONE",
-      "channelType": "MAINTENANCE",
-      "deviceId": "2337",
-      "id": "2338",
-      "index": 0,
-      "isAesAvailable": false,
-      "isEventable": true,
-      "isInternal": false,
-      "isLogable": true,
-      "isLogged": false,
-      "isReadable": true,
-      "isReady": true,
-      "isUsable": true,
-      "isVirtual": false,
-      "isVisible": true,
-      "isWritable": false,
-      "master": {
-        "ARR_TIMEOUT": "10",
-        "CYCLIC_BIDI_INFO_MSG_DISCARD_FACTOR": "1",
-        "CYCLIC_BIDI_INFO_MSG_DISCARD_VALUE": "57",
-        "CYCLIC_INFO_MSG": "1",
-        "CYCLIC_INFO_MSG_DIS": "1",
-        "CYCLIC_INFO_MSG_DIS_UNCHANGED": "20",
-        "CYCLIC_INFO_MSG_OVERDUE_THRESHOLD": "2",
-        "DISABLE_MSG_TO_AC": "0",
-        "DUTYCYCLE_LIMIT": "180",
-        "ENABLE_ROUTING": "1",
-        "LOCAL_RESET_DISABLED": "0",
-        "LOW_BAT_LIMIT": "1.100000",
-        "SUPPORTING_WIRED_OPERATION_MODE": "1"
-      },
-      "mode": "MODE_AES",
-      "name": "Window 1:0",
-      "partnerId": "",
       "values": {
-        "CONFIG_PENDING": "0",
-        "DUTY_CYCLE": "0",
-        "ERROR_CODE": "0",
-        "LOW_BAT": "0",
         "OPERATING_VOLTAGE": "1.400000",
-        "OPERATING_VOLTAGE_STATUS": "0",
-        "RSSI_DEVICE": "-64",
-        "SABOTAGE": "0",
-        "UNREACH": "0",
-        "UPDATE_PENDING": "0"
+        "RSSI_DEVICE": "-64"
       }
     },
     {
-      "address": "00AB1234567890:1",
-      "category": "CATEGORY_SENDER",
-      "channelType": "SHUTTER_CONTACT",
-      "deviceId": "2337",
-      "id": "2339",
-      "index": 1,
-      "isAesAvailable": false,
-      "isEventable": true,
-      "isInternal": false,
-      "isLogable": true,
-      "isLogged": false,
-      "isReadable": true,
-      "isReady": true,
-      "isUsable": true,
-      "isVirtual": false,
-      "isVisible": true,
-      "isWritable": false,
-      "master": {
-        "ALARM_MODE_TYPE": "0",
-        "ALARM_MODE_ZONE_1": "0",
-        "ALARM_MODE_ZONE_2": "0",
-        "ALARM_MODE_ZONE_3": "0",
-        "ALARM_MODE_ZONE_4": "0",
-        "ALARM_MODE_ZONE_5": "0",
-        "ALARM_MODE_ZONE_6": "0",
-        "ALARM_MODE_ZONE_7": "0",
-        "EVENT_DELAY_UNIT": "0",
-        "EVENT_DELAY_VALUE": "10",
-        "MSG_FOR_POS_A": "2",
-        "MSG_FOR_POS_B": "1",
-        "SAMPLE_INTERVAL": "5.000000"
-      },
-      "mode": "MODE_AES",
-      "name": "Window 1:1",
-      "partnerId": "",
       "values": {
         "STATE": "1"
       }
-    },
-    "..."
+    }
   ],
-  "enabledServiceMsg": "true",
-  "id": "2337",
-  "interface": "HmIP-RF",
-  "isReady": "true",
-  "name": "Window 1",
-  "operateGroupOnly": "false",
   "type": "HmIP-SWDO-2"
-}]
+}}
 ```
 
-## Setup Postgres
-
-```sql
--- Create User
-CREATE USER homematic;
--- Create Database
-CREATE DATABASE homematic OWNER homematic;
-REVOKE CONNECT ON DATABASE homematic FROM PUBLIC;
--- connect to db
-\c homematic
--- Create Tables
-SET ROLE homematic;
-CREATE TABLE IF NOT EXISTS measurements (
-    timestamp timestamp with time zone NOT NULL,
-    persistent bool NOT NULL,
-    thermostat_voltage float4 NOT NULL,
-    thermostat_rssi int2 NOT NULL,
-    thermostat_temp float4 NOT NULL,
-    thermostat_desired_temp float4 NOT NULL,
-    thermostat_valve float4 NOT NULL,
-    thermostat_window_open bool NOT NULL,
-    window_voltage float4 NOT NULL,
-    window_rssi int2 NOT NULL,
-    window_open bool NOT NULL,
-    PRIMARY KEY (timestamp, persistent)
-) PARTITION BY LIST(persistent);
-CREATE TABLE measurements_persistent PARTITION OF measurements FOR VALUES IN (true);
-CREATE TABLE measurements_nonpersistent PARTITION OF measurements FOR VALUES IN (false);
-```
-
-## Configuration of iot2db
-
-```toml
-[frontend.homematic]
-type = "homematic-ccu3"
-url = "https://ccu3-url"
-#basic_auth = { username = "", password = "" }
-frequency_secs = 10
-username = "iot2db"
-password = "MyPassword"
-
-[backend.postgres-homematic]
-type = "postgres"
-host = "localhost"
-#port = 5432
-database = "homematic"
-username = "homematic"
-#password = ""
-
-[data.homematic]
-frontend.name = "homematic"
-backend.name = "postgres-pv"
-backend.postgres_table = "measurements"
-persistent_every_secs = 120
-clean_non_persistent_after_days = 7
-values.timestamp = { pointer = "/nonexistent", postprocess = '"CURRENT_TIMESTAMP"' }
-values.thermostat_voltage = "/Thermostat 1/channels/0/values/OPERATING_VOLTAGE"
-values.thermostat_rssi = "/Thermostat 1/channels/0/values/RSSI_DEVICE"
-values.thermostat_temp = "/Thermostat 1/channels/1/values/ACTUAL_TEMPERATURE"
-values.thermostat_desired_temp = "/Thermostat 1/channels/1/values/SET_POINT_TEMPERATURE"
-values.thermostat_valve = "/Thermostat 1/channels/1/values/LEVEL"
-values.thermostat_window_open = "/Thermostat 1/channels/1/values/WINDOW_STATE"
-values.window_voltage = "/Window 1/channels/0/values/OPERATING_VOLTAGE"
-values.window_rssi = "/Window 1/channels/0/values/RSSI_DEVICE"
-values.window_open = "/Window 1/channels/1/values/STATE"
+Weather Sensor Pro (trimmed):
+```json
+{"Wetter": {
+  "channels": [
+    {
+      "values": {
+        "RSSI_DEVICE": "-72"
+      }
+    },
+    {
+      "values": {
+        "ACTUAL_TEMPERATURE": "13.500000",
+        "HUMIDITY": "68",
+        "ILLUMINATION": "0.000000",
+        "RAINING": "0",
+        "RAIN_COUNTER": "0.000000",
+        "SUNSHINEDURATION": "892",
+        "WIND_DIR": "215.000000",
+        "WIND_DIR_RANGE": "0.000000",
+        "WIND_SPEED": "0.000000",
+      }
+    }
+  ],
+  "type": "HmIP-SWO-PR"
+}}
 ```

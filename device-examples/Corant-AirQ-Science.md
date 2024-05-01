@@ -51,37 +51,6 @@ The AirQ Science (and only science) supports MQTT.
     > If `ssl` is `true`, the certificate files have to be on the sd card in a directory named `cert/`
     > as given by your setting of `ssl_params`.
  
-## Example MQTT Message
-
-```json
-Your_Topic {
-  "oxygen": [20.442, 4.33],
-  "health": 992,
-  "temperature": [25.098, 0.53],
-  "dewpt": [16.823, 0.99],
-  "timestamp": 1690715588000,
-  "Status": {
-    "co": "co sensor still in warm up phase; waiting time = 582 s",
-    "so2": "so2 sensor still in warm up phase; waiting time = 2300 s",
-    "no2": "no2 sensor still in warm up phase; waiting time = 2300 s",
-    "o3": "o3 sensor still in warm up phase; waiting time = 2300 s"
-  },
-  "sound": [57.05, 2.9],
-  "humidity": [59.398, 4.49],
-  "tvoc": [157, 24],
-  "sound_max": [83.6, 1.9],
-  "pm10": [0.8, 10.0],
-  "pressure": [959.0, 1.0],
-  "co2": [440.7, 63.2],
-  "DeviceID": "Your_self-defined_device_ID",
-  "performance": 874,
-  "pm2_5": [0.3, 10.0],
-  "TypPS": 4.6,
-  "pm1": [0.1, 10.0],
-  "humidity_abs": [13.81, 0.86]
-}
-```
-
 ## Setup of Postgres
 
 ```sql
@@ -165,4 +134,35 @@ values.pm10 = "/pm10/0"
 values.oxygen = "/oxygen/0"
 values.o3 = "/o3/0"
 values.so2 = "/so2/0"
+```
+
+## Example MQTT Message
+
+```json
+Your_Topic {
+  "oxygen": [20.442, 4.33],
+  "health": 992,
+  "temperature": [25.098, 0.53],
+  "dewpt": [16.823, 0.99],
+  "timestamp": 1690715588000,
+  "Status": {
+    "co": "co sensor still in warm up phase; waiting time = 582 s",
+    "so2": "so2 sensor still in warm up phase; waiting time = 2300 s",
+    "no2": "no2 sensor still in warm up phase; waiting time = 2300 s",
+    "o3": "o3 sensor still in warm up phase; waiting time = 2300 s"
+  },
+  "sound": [57.05, 2.9],
+  "humidity": [59.398, 4.49],
+  "tvoc": [157, 24],
+  "sound_max": [83.6, 1.9],
+  "pm10": [0.8, 10.0],
+  "pressure": [959.0, 1.0],
+  "co2": [440.7, 63.2],
+  "DeviceID": "Your_self-defined_device_ID",
+  "performance": 874,
+  "pm2_5": [0.3, 10.0],
+  "TypPS": 4.6,
+  "pm1": [0.1, 10.0],
+  "humidity_abs": [13.81, 0.86]
+}
 ```
