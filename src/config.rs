@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::convert::Infallible;
 use std::str::FromStr;
 use indexmap::IndexMap;
@@ -20,6 +21,7 @@ pub enum FrontendConfig {
     HttpRest(HttpRestConfig),
     HomematicCcu3(HomematicCcu3Config),
     Mqtt(MqttConfig),
+    Shell(ShellConfig),
 }
 #[derive(Debug, Clone, Deserialize)]
 #[serde(tag = "type", rename_all = "kebab-case")]
@@ -28,6 +30,7 @@ pub enum BackendConfig {
 }
 
 // frontends
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct HttpRestConfig {
     pub url: String,
@@ -59,8 +62,16 @@ pub struct MqttAuth {
     pub username: String,
     pub password: String,
 }
+#[derive(Debug, Clone, Deserialize)]
+pub struct ShellConfig {
+    pub cmd: String,
+    pub frequency_secs: u32,
+    #[serde(default)]
+    pub regex: HashMap<String, String>,
+}
 
 // backends
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct PostgresConfig {
     pub host: String,
