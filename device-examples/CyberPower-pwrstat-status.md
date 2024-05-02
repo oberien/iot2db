@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS measurements (
     test_result_date timestamp with time zone NULL,
     last_power_event text NULL,
     last_power_event_date timestamp with time zone NULL,
+    last_power_event_duration interval NULL,
     PRIMARY KEY (timestamp, persistent)
 ) PARTITION BY LIST(persistent);
 CREATE TABLE measurements_persistent PARTITION OF measurements FOR VALUES IN (true);
@@ -59,9 +60,10 @@ regex.remaining_runtime = "Remaining Runtime\\.+ (\\d+)"
 regex.load = "Load\\.+ (\\d+)"
 regex.line_interaction = "Line Interaction\\.+ ([^\\n]+)"
 regex.test_result = "Test Result\\.+ (.*) at "
-regex.test_result_date = "Test Result\\.+ .+ at ([^\\n]+)"
+regex.test_result_date = "Test Result\\.+ .+ at (\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}:\\d{2})"
 regex.last_power_event = "Last Power Event\\.+ (.+) at "
-regex.last_power_event_date = "Last Power Event\\.+ .+ at ([^\\n]+)"
+regex.last_power_event_date = "Last Power Event\\.+ .+ at (\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}:\\d{2})"
+regex.last_power_event_duration = "Last Power Event\\.+ .+ for (.*)\\.\\n"
 
 [backend.pwrstat]
 type = "postgres"
@@ -88,6 +90,7 @@ values.test_result = "/test_result"
 values.test_result_date = "/test_result_date"
 values.last_power_event = "/last_power_event"
 values.last_power_event_date = "/last_power_event_date"
+values.last_power_event_duration = "/last_power_event_duration"
 ```
 
 ## Example `pwrstat -status` output
