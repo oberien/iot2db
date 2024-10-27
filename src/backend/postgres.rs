@@ -115,9 +115,9 @@ async fn insert(
     assert_eq!(fmt.pop(), Some(','));
     fmt.push_str(") ON CONFLICT DO NOTHING");
 
-    eprintln!("{fmt}");
+    eprintln!("backend `{backend_name}` table `{table}`: {fmt}");
     match client.execute(&fmt, &[]).await {
         Ok(_) => (),
-        Err(e) => eprintln!("cannot insert into postgres backend {backend_name} table {table}: {e}"),
+        Err(e) => eprintln!("cannot insert into postgres backend `{backend_name}` table `{table}`: {e}"),
     }
 }
