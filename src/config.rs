@@ -56,6 +56,8 @@ pub struct MqttConfig {
     #[serde(default = "default_mqtt_port")]
     pub port: u16,
     pub auth: Option<MqttAuth>,
+    #[serde(default = "default_mqtt_client_id")]
+    pub client_id: String,
 }
 #[derive(Debug, Clone, Deserialize)]
 pub struct MqttAuth {
@@ -159,4 +161,5 @@ impl Default for Aggregate {
 }
 
 fn default_mqtt_port() -> u16 { 1883 }
+fn default_mqtt_client_id() -> String { "iot2db".to_string() }
 fn default_postgres_port() -> u16 { 5432 }
