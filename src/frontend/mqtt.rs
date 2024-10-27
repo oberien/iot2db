@@ -32,7 +32,7 @@ impl MqttFrontend {
                         let value: Value = match serde_json::from_slice(&p.payload) {
                             Ok(value) => value,
                             // if it's not JSON, interpret it as simple String
-                            Err(e) => Value::String(String::from_utf8_lossy(&p.payload).into_owned()),
+                            Err(_) => Value::String(String::from_utf8_lossy(&p.payload).into_owned()),
                         };
                         let value = json!({ &p.topic: value });
                         let receivers = receivers2.lock().unwrap();

@@ -11,6 +11,7 @@ pub struct PostgresBackend {
 }
 
 struct PostgresInserter {
+    backend_name: String,
     client: Arc<AsyncMutex<Client>>,
     table: String,
 }
@@ -49,6 +50,7 @@ impl Backend for PostgresBackend {
 
     async fn inserter(&self, pgref: PostgresRef) -> Arc<dyn BackendInserter + Send + Sync + 'static> {
         Arc::new(PostgresInserter {
+            backend_name: pgref.name,
             client: Arc::clone(&self.client),
             table: pgref.postgres_table,
         })
@@ -59,6 +61,7 @@ impl Backend for PostgresBackend {
 impl BackendInserter for PostgresInserter {
     async fn insert(&self, data: DataToInsert) {
         insert(&*self.client.lock().await,
+            &self.backend_name,
             &self.table,
             &data.escaped_values,
             data.persistent_every_secs,
@@ -82,6 +85,7 @@ async fn delete_old_non_persistent(client: &Client, table: &String, delete_older
 }
 async fn insert(
     client: &Client,
+    backend_name: &str,
     table: &str,
     escaped_values: &IndexMap<String, String>,
     persistent_every_secs: Option<u32>
@@ -114,6 +118,6 @@ async fn insert(
     eprintln!("{fmt}");
     match client.execute(&fmt, &[]).await {
         Ok(_) => (),
-        Err(e) => eprintln!("cannot insert into postgres: {e}"),
+        Err(e) => eprintln!("cannot insert into postgres backend {backend_name} table {table}: {e}"),
     }
 }
