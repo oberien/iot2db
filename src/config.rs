@@ -113,13 +113,31 @@ pub enum Aggregate {
 #[derive(Debug, Clone, Deserialize)]
 pub struct FrontendRef {
     pub name: String,
+    pub data_type: DataType,
     #[serde(flatten)]
     pub data: Option<FrontendRefData>,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(untagged)]
 pub enum FrontendRefData {
-    Mqtt { mqtt_topic: String },
+    Mqtt {
+        mqtt_topic: String,
+    },
+}
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum DataType {
+    /// Data is provided as a single JSON-blob
+    ///
+    /// Examples:
+    /// * a REST API provides the result as JSON response
+    /// * MQTT provides a full JSON-blob as a single message
+    Wide,
+    /// Data is provided with one value per message
+    ///
+    /// Examples:
+    /// * MQTT provides one value per message / topic
+    Narrow,
 }
 #[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]

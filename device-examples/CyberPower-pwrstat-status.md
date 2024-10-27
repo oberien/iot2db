@@ -2,7 +2,7 @@
 
 Frontend | Backend | Table Layout
 --- | --- | ---
-shell | postgres | wide
+shell (wide via regex) | postgres | wide
 
 Gather data from a CyberPower UPS using CyberPower's `pwrtstat -status` cli.
 
@@ -73,6 +73,7 @@ username = "ups"
 
 [data.pwrstat]
 frontend.name = "pwrstat"
+frontend.data_type = "wide"
 backend.name = "pwrstat"
 backend.postgres_table = "measurements"
 persistent_every_secs = 120

@@ -75,7 +75,8 @@ username = "homematic"
 
 [data.homematic]
 frontend.name = "homematic"
-backend.name = "postgres-pv"
+frontend.data_type = "wide"
+backend.name = "postgres-homematic"
 backend.postgres_table = "measurements"
 persistent_every_secs = 120
 clean_non_persistent_after_days = 7
@@ -281,7 +282,7 @@ values.bar1 = "/Thermostat 1/channels/1/master"
 
 Weather Sensor Pro (trimmed):
 ```json
-{"Wetter": {
+{"Weather": {
   "channels": [
     {
       "values": {

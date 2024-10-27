@@ -2,7 +2,7 @@
 
 Frontend | Backend | Table Layout
 --- | --- | ---
-mqtt | postgres | wide
+mqtt (wide) | postgres | wide
 
 AirQ is an air quality measurement device with lots of different sensors.
 The AirQ Science (and only science) supports MQTT.
@@ -28,7 +28,7 @@ The AirQ Science (and only science) supports MQTT.
     >     "user": "Your_Username",
     >     "password": "Your_Password",
     >     "port": 8883,
-    >     "topic": "Your_Topic",
+    >     "topic": "airq/sensors",
     >     "retain": false,
     >     "qos": 1,
     >     "keepalive": 10000,
@@ -110,36 +110,37 @@ username = "airq"
 
 [data.airq]
 frontend.name = "mqtt"
-frontend.mqtt_topic = "Your_Topic"
+frontend.mqtt_topic = "airq/sensors"
+frontend.data_type = "wide"
 backend.name = "postgres-airq"
 backend.postgres_table = "measurements"
 persistent_every_secs = 120
 clean_non_persistent_after_days = 7
-values.timestamp = { pointer = "/timestamp", preprocess = 'f"{value.parse_int().unwrap()/1000}"', postprocess = 'f"to_timestamp({value})"' }
-values.health = "/health"
-values.performance = "/performance"
-values.tvoc = "/tvoc/0"
-values.humidity = "/humidity/0"
-values.humidity_abs = "/humidity_abs/0"
-values.temperature = "/temperature/0"
-values.dewpt = "/dewpt/0"
-values.sound = "/sound/0"
-values.pressure = "/pressure/0"
-values.no2 = "/no2/0"
-values.co = "/co/0"
-values.co2 = "/co2/0"
-values.pm1 = "/pm1/0"
-values.pm2_5 = "/pm2_5/0"
-values.pm10 = "/pm10/0"
-values.oxygen = "/oxygen/0"
-values.o3 = "/o3/0"
-values.so2 = "/so2/0"
+values.timestamp = { pointer = "/airq~1sensors/timestamp", preprocess = 'f"{value.parse_int().unwrap()/1000}"', postprocess = 'f"to_timestamp({value})"' }
+values.health = "/airq~1sensors/health"
+values.performance = "/airq~1sensors/performance"
+values.tvoc = "/airq~1sensors/tvoc/0"
+values.humidity = "/airq~1sensors/humidity/0"
+values.humidity_abs = "/airq~1sensors/humidity_abs/0"
+values.temperature = "/airq~1sensors/temperature/0"
+values.dewpt = "/airq~1sensors/dewpt/0"
+values.sound = "/airq~1sensors/sound/0"
+values.pressure = "/airq~1sensors/pressure/0"
+values.no2 = "/airq~1sensors/no2/0"
+values.co = "/airq~1sensors/co/0"
+values.co2 = "/airq~1sensors/co2/0"
+values.pm1 = "/airq~1sensors/pm1/0"
+values.pm2_5 = "/airq~1sensors/pm2_5/0"
+values.pm10 = "/airq~1sensors/pm10/0"
+values.oxygen = "/airq~1sensors/oxygen/0"
+values.o3 = "/airq~1sensors/o3/0"
+values.so2 = "/airq~1sensors/so2/0"
 ```
 
 ## Example MQTT Message
 
 ```json
-Your_Topic {
+{ "airq/sensors": {
   "oxygen": [20.442, 4.33],
   "health": 992,
   "temperature": [25.098, 0.53],
@@ -164,5 +165,5 @@ Your_Topic {
   "TypPS": 4.6,
   "pm1": [0.1, 10.0],
   "humidity_abs": [13.81, 0.86]
-}
+} }
 ```

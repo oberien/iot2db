@@ -5,7 +5,7 @@ use futures::stream::BoxStream;
 use futures::StreamExt;
 use serde_json::Value;
 use crate::config;
-use crate::config::{FrontendConfig, FrontendRef, FrontendRefData, HomematicCcu3Config, HttpRestConfig, ShellConfig};
+use crate::config::{DataType, FrontendConfig, FrontendRef, FrontendRefData, HomematicCcu3Config, HttpRestConfig, ShellConfig};
 use crate::frontend::mqtt::MqttFrontend;
 
 mod http_rest;
@@ -47,20 +47,23 @@ impl Frontends {
         match self.frontends.get(&frontend_ref.name) {
             Some(Frontend::HomematicCcu3(hm)) => {
                 assert_eq!(frontend_ref.data, None);
+                assert_eq!(frontend_ref.data_type, DataType::Wide, "Homematic CCU3 only supports frontend.data_type = \"wide\"");
                 homematic_ccu3::stream(hm.clone(), values).boxed()
             }
             Some(Frontend::HttpRest(rest)) => {
                 assert_eq!(frontend_ref.data, None);
+                assert_eq!(frontend_ref.data_type, DataType::Wide, "HTTP REST only supports frontend.data_type = \"wide\"");
                 http_rest::stream(rest.clone()).boxed()
             }
             Some(Frontend::Mqtt(mqtt)) => {
                 let Some(FrontendRefData::Mqtt { mqtt_topic }) = frontend_ref.data else {
-                    panic!("Usage of MQTT frontend {} requires data to provide mqtt_topic", frontend_ref.name)
+                    panic!("Usage of MQTT frontend `{}` requires data to provide mqtt_topic", frontend_ref.name)
                 };
-                mqtt.subscribe(mqtt_topic).await.boxed()
+                mqtt.stream(mqtt_topic).await.boxed()
             }
             Some(Frontend::Shell(config)) => {
                 assert_eq!(frontend_ref.data, None);
+                assert_eq!(frontend_ref.data_type, DataType::Wide, "Shell only supports frontend.data_type = \"wide\"");
                 shell::stream(config).boxed()
             }
             None => panic!("unknown frontend {} for data", frontend_ref.name),

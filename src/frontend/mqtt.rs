@@ -3,7 +3,7 @@ use std::time::Duration;
 use futures::Stream;
 use regex::Regex;
 use rumqttc::{AsyncClient, Event, Incoming, MqttOptions, QoS};
-use serde_json::Value;
+use serde_json::{json, Value};
 use tokio::sync::broadcast::{self, Sender};
 use tokio_stream::StreamExt;
 use tokio_stream::wrappers::{BroadcastStream, errors::BroadcastStreamRecvError};
@@ -31,20 +31,20 @@ impl MqttFrontend {
                     Ok(Event::Incoming(Incoming::Publish(p))) => {
                         let value: Value = match serde_json::from_slice(&p.payload) {
                             Ok(value) => value,
-                            Err(e) => {
-                                eprintln!("error decoding mqtt payload to json: {:?} ({:?})", e, p.payload);
-                                continue
-                            }
+                            // if it's not JSON, interpret it as simple String
+                            Err(e) => Value::String(String::from_utf8_lossy(&p.payload).into_owned()),
                         };
+                        let value = json!({ &p.topic: value });
                         let receivers = receivers2.lock().unwrap();
-                        let sender = receivers.iter()
-                            .find_map(|(regex, sender)| regex.is_match(&p.topic).then_some(sender));
-                        match sender {
-                            Some(sender) => { sender.send(value).unwrap(); },
-                            None => {
-                                eprintln!("got message for topic {:?} but can't find any subscriber", p.topic);
-                                continue
-                            }
+                        let senders = receivers.iter()
+                            .filter_map(|(regex, sender)| regex.is_match(&p.topic).then_some(sender));
+                        let mut sent = false;
+                        for sender in senders {
+                            sender.send(value.clone()).unwrap();
+                            sent = true;
+                        }
+                        if !sent {
+                            eprintln!("got message for topic {:?} but can't find any subscriber", p.topic);
                         }
                     },
                     Err(x) => eprintln!("error in mqtt: {x:?}"),
@@ -55,19 +55,30 @@ impl MqttFrontend {
         MqttFrontend { client, receivers }
     }
 
-    pub async fn subscribe(&self, topic: String) -> impl Stream<Item = Value> {
-        let pattern = format!("^{}$", regex::escape(&topic).replace("\\#", ".*"));
+    pub async fn stream(&self, topic: String) -> impl Stream<Item = Value> {
+        // convert topic into a regex
+        let pattern = regex::escape(&topic);
+        // topic wildcard `+` matches everything in a single-level
+        let mut pattern = pattern.replace("\\+", "[^/]*");
+        // wildcard `#` matches everything in all levels, but must be at the end
+        if pattern.ends_with("\\#") {
+            assert_eq!(pattern.pop(), Some('#'));
+            assert_eq!(pattern.pop(), Some('\\'));
+            pattern.push_str(".*");
+        };
+        // pattern must match the full string
+        let pattern = format!("^{pattern}$");
         let rx = {
             let mut receivers = self.receivers.lock().unwrap();
             let receiver = receivers.iter().find(|(regex, _)| regex.as_str() == &pattern);
             match receiver {
                 Some((_topic, sender)) => sender.subscribe(),
                 None => {
-                    receivers.push((Regex::new(&pattern).unwrap(), broadcast::channel(10).0));
+                    receivers.push((Regex::new(&pattern).unwrap(), broadcast::channel(200).0));
                     receivers.last().unwrap().1.subscribe()
                 },
             }
-        } ;
+        };
         self.client.subscribe(&topic, QoS::AtMostOnce).await.unwrap();
         println!("subscribed to `{topic}` using regex `{pattern}`");
         BroadcastStream::new(rx)

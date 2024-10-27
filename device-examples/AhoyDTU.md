@@ -2,7 +2,7 @@
 
 Frontend | Backend | Table Layout
 --- | --- | ---
-http-rest | postgres | wide
+http-rest (wide) | postgres | wide
 
 HTTP-REST setup for the AhoyDTU, an open-source module for controlling and reading data from
 Hoymiles photovoltaik module power inverters.
@@ -78,6 +78,7 @@ username = "pv"
 
 [data.pv]
 frontend.name = "ahoydtu-rest"
+frontend.data_type = "wide"
 backend.name = "postgres-pv"
 backend.postgres_table = "measurements"
 persistent_every_secs = 120

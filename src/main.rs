@@ -3,11 +3,11 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 use futures::StreamExt;
-use crate::config::{BackendConfig, BackendRef, Config};
+use crate::config::{BackendConfig, BackendRef, Config, DataType};
 use rebo::{FromValue, IntoValue, ReboConfig, ReturnValue};
 use crate::backend::{Backend, DataToInsert, Stdout};
 use crate::backend::postgres::PostgresBackend;
-use crate::data::{Mapper, WideToWide};
+use crate::data::{DataMapper, NarrowToWide, WideToWide};
 use crate::frontend::Frontends;
 
 mod config;
@@ -49,6 +49,7 @@ async fn main() {
     let mut spawn_handles = Vec::new();
     for (data_name, data) in config.data {
         // get frontend stream
+        let frontend_data_type = data.frontend.data_type;
         let stream = frontends.stream(data.frontend, data.values.values()).await;
 
         // get backend sink
@@ -83,7 +84,10 @@ async fn main() {
         };
 
         // get value- / data mapper
-        let mut mapper = WideToWide::new(data.values, escaper);
+        let mut mapper: Box<dyn DataMapper + Send> = match frontend_data_type {
+            DataType::Wide => Box::new(WideToWide::new(data.values, escaper)),
+            DataType::Narrow => Box::new(NarrowToWide::new(data.values, escaper)),
+        };
 
         // pipe everything into another
         let future = stream

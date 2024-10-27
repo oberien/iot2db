@@ -5,12 +5,12 @@ A service to fetch data from MQTT or a REST API and store it in a database
 
 Currently supported:
 * Frontends
-    * HTTP REST
-    * MQTT
-    * Homematic CCU3
-    * Shell commands
+    * HTTP REST (wide)
+    * MQTT (wide & narrow)
+    * Homematic CCU3 (wide)
+    * Shell commands (wide via regex)
 * Backends:
-    * PostgreSQL
+    * PostgreSQL (wide)
 
 ## Installation
 
