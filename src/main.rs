@@ -7,6 +7,7 @@ use crate::config::{BackendConfig, BackendRef, Config};
 use rebo::{FromValue, IntoValue, ReboConfig, ReturnValue};
 use crate::backend::{Backend, DataToInsert, Stdout};
 use crate::backend::postgres::PostgresBackend;
+use crate::data::{Mapper, WideToWide};
 use crate::frontend::Frontends;
 
 mod config;
@@ -82,11 +83,11 @@ async fn main() {
         };
 
         // get value- / data mapper
-        let mapper = data::mapper(data.values, escaper);
+        let mut mapper = WideToWide::new(data.values, escaper);
 
         // pipe everything into another
         let future = stream
-            .map(mapper)
+            .filter_map(move |value| futures::future::ready(mapper.consume_value(value)))
             .map(move |values| DataToInsert { escaped_values: values, persistent_every_secs: data.persistent_every_secs })
             .for_each(move |data| {
                 let inserter = Arc::clone(&inserter);
