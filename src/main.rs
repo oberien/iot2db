@@ -32,8 +32,6 @@ async fn main() {
     let config: Config = toml::from_str(&config_content)
         .expect("error in config file");
 
-    println!("{:#?}", config);
-
     let mut pg_backends = HashMap::new();
     for (name, config) in config.backend {
         match config {
@@ -100,23 +98,6 @@ async fn main() {
         let handle = tokio::spawn(future);
         spawn_handles.push(handle);
     }
-
-    // let FrontendConfig::HttpRest(http_rest) = &config.frontend["my-rest"] else { panic!("uff") };
-    // let mapper = data::mapper::<PostgresBackend>(&config.data["ahoydtu"].values);
-    // let BackendConfig::Postgres(postgres) = &config.backend["my-postgres"];
-    // let BackendRef::Postgres(postgres_ref) = &config.data["ahoydtu"].backend;
-    // let consumer = PostgresBackend::new(postgres, postgres_ref).await;
-    //
-    // let stream = frontend::http_rest::stream(http_rest);
-    // let mapped = stream.map(mapper);
-    // let consumed = mapped.for_each(|values| consumer.consume(values));
-
-    // let mut stream = pin!(consumed);
-
-    // while let Some(v) = stream.next().await {
-    //     println!("{v:#?}");
-    // }
-    // consumed.await
 
     futures::future::join_all(spawn_handles).await;
 }

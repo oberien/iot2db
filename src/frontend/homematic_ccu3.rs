@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use serde::de::DeserializeOwned;
 use serde_json::{json, Value};
 use crate::config;
-use crate::config::{BasicAuth, HomematicCcu3Config};
+use crate::config::{BasicAuth, HomematicCcu3Config, ValueKind};
 
 #[derive(Default)]
 struct ParametersetToLoad {
@@ -22,7 +22,11 @@ pub fn stream<T: Borrow<config::Value>>(config: HomematicCcu3Config, accessed_va
     // check which device's channel's parameterSets to load
     let mut parametersets_to_load: HashMap<(String, usize), ParametersetToLoad> = HashMap::new();
     for value in accessed_values {
-        let mut parts = value.borrow().pointer.split('/').skip(1).map(|x| x.replace("~1", "/").replace("~0", "~"));
+        let pointer = match &value.borrow().kind {
+            ValueKind::Pointer { pointer } => pointer,
+            ValueKind::Constant { .. } => continue,
+        };
+        let mut parts = pointer.split('/').skip(1).map(|x| x.replace("~1", "/").replace("~0", "~"));
         let Some(device_name) = parts.next() else { continue };
         let Some("channels") = parts.next().as_deref() else { continue };
         let Some(channel) = parts.next().and_then(|c| c.parse().ok()) else { continue };
@@ -157,7 +161,6 @@ pub fn stream<T: Borrow<config::Value>>(config: HomematicCcu3Config, accessed_va
                 }));
 
                 let res = Value::Object(devices);
-                // println!("{res:#?}");
                 break Some((res, iteration))
             }
         }

@@ -80,7 +80,6 @@ impl MqttFrontend {
             }
         };
         self.client.subscribe(&topic, QoS::AtMostOnce).await.unwrap();
-        println!("subscribed to `{topic}` using regex `{pattern}`");
         BroadcastStream::new(rx)
             .filter_map(move |val| match val {
                 Ok(val) => Some(val),

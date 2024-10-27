@@ -97,13 +97,20 @@ pub struct DataConfig {
 }
 #[derive(Debug, Clone, Deserialize)]
 pub struct Value {
-    pub pointer: String,
+    #[serde(flatten)]
+    pub kind: ValueKind,
     /// rebo code taking `value`-string before escaping and returning its replacement-string
     pub preprocess: Option<String>,
     /// rebo code taking `value`-string after escaping and returning its replacement-string
     pub postprocess: Option<String>,
     #[serde(default)]
     pub aggregate: Aggregate,
+}
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+pub enum ValueKind {
+    Pointer { pointer: String },
+    Constant { constant_value: String },
 }
 #[derive(Debug, Clone, Deserialize)]
 pub enum Aggregate {
@@ -165,7 +172,7 @@ impl FromStr for Value {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(Value {
-            pointer: s.to_string(),
+            kind: ValueKind::Pointer { pointer: s.to_string() },
             preprocess: None,
             postprocess: None,
             aggregate: Aggregate::default(),
