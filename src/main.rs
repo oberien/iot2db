@@ -14,6 +14,7 @@ mod config;
 mod frontend;
 mod data;
 mod backend;
+mod iter_json_value;
 
 #[tokio::main]
 async fn main() {
@@ -48,7 +49,7 @@ async fn main() {
     for (data_name, data) in config.data {
         // get frontend stream
         let frontend_data_type = data.frontend.data_type;
-        let stream = frontends.stream(data.frontend, data.values.values()).await;
+        let stream = frontends.stream(data.frontend, data.mapping.values.values()).await;
 
         // get backend sink
         let (escaper, inserter) = match data.backend {
@@ -83,8 +84,8 @@ async fn main() {
 
         // get value- / data mapper
         let mut mapper: Box<dyn DataMapper + Send> = match frontend_data_type {
-            DataType::Wide => Box::new(WideToWide::new(data.values, escaper)),
-            DataType::Narrow => Box::new(NarrowToWide::new(data.values, escaper)),
+            DataType::Wide => Box::new(WideToWide::new(data.mapping, escaper)),
+            DataType::Narrow => Box::new(NarrowToWide::new(data.mapping, escaper)),
         };
 
         // pipe everything into another

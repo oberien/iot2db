@@ -80,7 +80,7 @@ backend.name = "postgres-homematic"
 backend.postgres_table = "measurements"
 persistent_every_secs = 120
 clean_non_persistent_after_days = 7
-values.timestamp = { pointer = "/nonexistent", postprocess = '"CURRENT_TIMESTAMP"' }
+values.timestamp = { constant_value = "", postprocess = '"CURRENT_TIMESTAMP"' }
 values.thermostat_voltage = "/Thermostat 1/channels/0/values/OPERATING_VOLTAGE"
 values.thermostat_rssi = "/Thermostat 1/channels/0/values/RSSI_DEVICE"
 values.thermostat_temp = "/Thermostat 1/channels/1/values/ACTUAL_TEMPERATURE"

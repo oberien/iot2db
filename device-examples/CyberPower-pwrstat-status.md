@@ -1,4 +1,4 @@
-# AhoyDTU
+# CyberPower UPS `pwrstat -status`
 
 Frontend | Backend | Table Layout
 --- | --- | ---
@@ -78,20 +78,8 @@ backend.name = "pwrstat"
 backend.postgres_table = "measurements"
 persistent_every_secs = 120
 clean_non_persistent_after_days = 7
-values.timestamp = { pointer = "/nonexistent", postprocess = '"CURRENT_TIMESTAMP"' }
-values.state = "/state"
-values.power_supply_by = "/power_supply_by"
-values.utility_voltage = "/utility_voltage"
-values.output_voltage = "/output_voltage"
-values.battery_capacity = "/battery_capacity"
-values.remaining_runtime = "/remaining_runtime"
-values.load = "/load"
-values.line_interaction = "/line_interaction"
-values.test_result = "/test_result"
-values.test_result_date = "/test_result_date"
-values.last_power_event = "/last_power_event"
-values.last_power_event_date = "/last_power_event_date"
-values.last_power_event_duration = "/last_power_event_duration"
+direct_keys = "all"
+values.timestamp = { constant_value = "", postprocess = '"CURRENT_TIMESTAMP"' }
 ```
 
 ## Example `pwrstat -status` output

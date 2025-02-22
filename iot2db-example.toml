@@ -21,6 +21,7 @@ username = "telemetry"
 
 [data.ahoydtu]
 frontend.name = "my-rest"
+frontend.data_type = "wide"
 backend.name = "my-postgres"
 backend.postgres_table = "ahoydtu"
 # persistence / non-persistence requires a "timestamp" column and a "persistent" bool column
@@ -33,7 +34,8 @@ values.ac_current = "/inverter/0/ch/0/1"
 
 [data.tasmota]
 frontend.name = "my-mqtt"
+frontend.data_type = "wide"
 frontend.mqtt_topic = "tele/tasmota/SENSOR"
 backend.name = "my-postgres"
 backend.postgres_table = "foo"
-values.power = "/ENERGY/Power"
+values.power = "/tele~1tasmota~1SENSOR/ENERGY/Power"

@@ -10,6 +10,7 @@ Currently supported:
     * Homematic CCU3 (wide)
     * Shell commands (wide via regex)
 * Backends:
+    * stdout (usually for testing)
     * PostgreSQL (wide)
 
 ## Installation

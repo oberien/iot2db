@@ -56,20 +56,20 @@ pub fn stream(config: &ShellConfig) -> impl Stream<Item = Value> + 'static {
                             let val = match regex.captures(&output) {
                                 Some(val) => val,
                                 None => {
-                                    eprintln!("regex {regex} doesn't match for key {name} in output of shell command `{}`", config.cmd);
+                                    eprintln!("regex `{regex}` doesn't match for key `{name}` in output of shell command `{}`", config.cmd);
                                     continue
                                 }
                             };
                             let val = match val.get(1) {
                                 Some(val) => val.as_str(),
                                 None => {
-                                    eprintln!("no capture group found for key {name} in output of shell command `{}`", config.cmd);
+                                    eprintln!("no capture group found for key `{name}` in output of shell command `{}`", config.cmd);
                                     continue
                                 }
                             };
                             match map.insert(name.clone(), Value::from(val)) {
                                 None => (),
-                                Some(_) => eprintln!("duplicate regex key {name:?} for shell command `{}`", config.cmd),
+                                Some(_) => eprintln!("duplicate regex key `{name:?}` for shell command `{}`", config.cmd),
                             }
                         }
                         Value::Object(map)

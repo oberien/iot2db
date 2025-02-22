@@ -85,23 +85,43 @@ pub struct PostgresConfig {
 }
 
 // data
-#[serde_as]
 #[derive(Debug, Clone, Deserialize)]
 pub struct DataConfig {
     pub frontend: FrontendRef,
     pub backend: BackendRef,
     pub persistent_every_secs: Option<u32>,
     pub clean_non_persistent_after_days: Option<u32>,
+    #[serde(flatten)]
+    pub mapping: Mapping,
+}
+#[serde_as]
+#[derive(Debug, Clone, Deserialize)]
+pub struct Mapping {
+    pub direct_values: Option<DirectValues>,
     #[serde_as(as = "IndexMap<_, serde_with::PickFirst<(serde_with::DisplayFromStr, _)>>")]
     pub values: IndexMap<String, Value>,
 }
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+pub enum DirectValues {
+    /// `direct_values = all`
+    All(DirectValuesAll),
+    /// `direct_values = ["foo", "bar"]`
+    Keys(Vec<String>),
+}
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum DirectValuesAll { All }
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct Value {
     #[serde(flatten)]
     pub kind: ValueKind,
     /// rebo code taking `value`-string before escaping and returning its replacement-string
+    /// if there is no value, e.g. the json-pointer doesn't exist, this is _not_ executed
     pub preprocess: Option<String>,
     /// rebo code taking `value`-string after escaping and returning its replacement-string
+    /// if there is no value, e.g. the json-pointer doesn't exist, this is _not_ executed
     pub postprocess: Option<String>,
     #[serde(default)]
     pub aggregate: Aggregate,
