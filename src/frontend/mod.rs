@@ -5,19 +5,21 @@ use futures::stream::BoxStream;
 use futures::StreamExt;
 use serde_json::Value;
 use crate::config;
-use crate::config::{DataType, FrontendConfig, FrontendRef, FrontendRefData, HomematicCcu3Config, HttpRestConfig, ShellConfig};
+use crate::config::{DataType, FrontendConfig, FrontendRef, FrontendRefData, HomematicCcu3Config, HttpRestConfig, JournaldConfig, ShellConfig};
 use crate::frontend::mqtt::MqttFrontend;
 
 mod http_rest;
 mod homematic_ccu3;
 mod mqtt;
 mod shell;
+mod journald;
 
 enum Frontend {
     HomematicCcu3(HomematicCcu3Config),
     HttpRest(HttpRestConfig),
     Mqtt(MqttFrontend),
     Shell(ShellConfig),
+    Journald(JournaldConfig),
 }
 
 pub struct Frontends {
@@ -35,6 +37,7 @@ impl Frontends {
             FrontendConfig::HttpRest(config) => Frontend::HttpRest(config),
             FrontendConfig::Mqtt(config) => Frontend::Mqtt(MqttFrontend::new(&config).await),
             FrontendConfig::Shell(config) => Frontend::Shell(config),
+            FrontendConfig::Journald(config) => Frontend::Journald(config),
         };
         let old = self.frontends.insert(name.clone(), frontend);
         if !old.is_none() {
@@ -65,6 +68,11 @@ impl Frontends {
                 assert_eq!(frontend_ref.data, None);
                 assert_eq!(frontend_ref.data_type, DataType::Wide, "Shell only supports frontend.data_type = \"wide\"");
                 shell::stream(config).boxed()
+            }
+            Some(Frontend::Journald(config)) => {
+                assert_eq!(frontend_ref.data, None);
+                assert_eq!(frontend_ref.data_type, DataType::Wide, "Journald only supports frontend.data_type = \"wide\"");
+                journald::stream(config.clone()).boxed()
             }
             None => panic!("unknown frontend {} for data", frontend_ref.name),
         }

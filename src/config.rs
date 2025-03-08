@@ -3,7 +3,7 @@ use std::convert::Infallible;
 use std::str::FromStr;
 use indexmap::IndexMap;
 use serde::Deserialize;
-use serde_with::serde_as;
+use serde_with::{serde_as, OneOrMany, formats::PreferOne};
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
@@ -22,6 +22,7 @@ pub enum FrontendConfig {
     HomematicCcu3(HomematicCcu3Config),
     Mqtt(MqttConfig),
     Shell(ShellConfig),
+    Journald(JournaldConfig),
 }
 #[derive(Debug, Clone, Deserialize)]
 #[serde(tag = "type", rename_all = "kebab-case")]
@@ -70,6 +71,17 @@ pub struct ShellConfig {
     pub frequency_secs: u32,
     #[serde(default)]
     pub regex: HashMap<String, String>,
+}
+#[serde_as]
+#[derive(Debug, Clone, Deserialize)]
+pub struct JournaldConfig {
+    #[serde(default = "default_true")]
+    pub system: bool,
+    #[serde(default = "default_true")]
+    pub current_user: bool,
+    pub directory: Option<String>,
+    #[serde_as(as = "OneOrMany<_, PreferOne>")]
+    pub unit: Vec<String>,
 }
 
 // backends
@@ -208,3 +220,4 @@ impl Default for Aggregate {
 fn default_mqtt_port() -> u16 { 1883 }
 fn default_mqtt_client_id() -> String { "iot2db".to_string() }
 fn default_postgres_port() -> u16 { 5432 }
+fn default_true() -> bool { true }

@@ -7,18 +7,14 @@ pub fn iter_json_value(value: &JsonValue) -> impl Iterator<Item = (String, &Json
 
 fn iter_json_value_in_pointer(pointer: String, value: &JsonValue) -> impl Iterator<Item = (String, &JsonValue)> {
     let generator = gen!({
+        yield_!((pointer.clone(), value));
         match value {
-            JsonValue::Null | JsonValue::Bool(_) | JsonValue::Number(_) | JsonValue::String(_) => {
-                yield_!((pointer, value));
-            },
+            JsonValue::Null | JsonValue::Bool(_) | JsonValue::Number(_) | JsonValue::String(_) => (),
             JsonValue::Array(array) => {
                 for (i, val) in array.iter().enumerate() {
                     let pointer = format!("{pointer}/{i}");
-                    yield_!((pointer.clone(), val));
-                    if val.is_array() || val.is_object() {
-                        for item in iter_json_value_in_pointer(pointer, val) {
-                            yield_!(item)
-                        }
+                    for item in iter_json_value_in_pointer(pointer.clone(), val) {
+                        yield_!(item)
                     }
                 }
             },
@@ -27,11 +23,8 @@ fn iter_json_value_in_pointer(pointer: String, value: &JsonValue) -> impl Iterat
                     // json-pointer escape the key
                     let key = key.replace("~", "~0").replace("/", "~1");
                     let pointer = format!("{pointer}/{key}");
-                    yield_!((pointer.clone(), val));
-                    if val.is_array() || val.is_object() {
-                        for item in iter_json_value_in_pointer(pointer, val) {
-                            yield_!(item)
-                        }
+                    for item in iter_json_value_in_pointer(pointer.clone(), val) {
+                        yield_!(item)
                     }
                 }
             },
@@ -57,6 +50,9 @@ mod test {
         "#).unwrap();
         // serde_json::Value objects use a BTreeMap by default -> keys are sorted
         let mut iter = iter_json_value(&val);
+        let (pointer, value) = iter.next().unwrap();
+        assert_eq!(pointer, "");
+        assert!(value.is_object());
         let (pointer, value) = iter.next().unwrap();
         assert_eq!(pointer, "/bar");
         assert_eq!(value, 42);
