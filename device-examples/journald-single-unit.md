@@ -19,7 +19,7 @@ will result in an infinite loop adding infinite entries to the db.
 
 ```sql
 -- Create User
-CREATE USER journald-foo;
+CREATE USER journald_foo;
 -- Create Database
 CREATE DATABASE journald_foo OWNER journald_foo;
 REVOKE CONNECT ON DATABASE journald_foo FROM PUBLIC;
@@ -48,12 +48,12 @@ unit = "foo.service"
 type = "postgres"
 host = "localhost"
 #port = 5432
-database = "journald-foo"
-username = "journald-foo"
+database = "journald_foo"
+username = "journald_foo"
 #password = ""
 
 [data.journal]
-frontend.name = "journal-foo"
+frontend.name = "journald-foo"
 frontend.data_type = "wide"
 backend.name = "postgres-journald-foo"
 backend.postgres_table = "journald_foo"
