@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS logs (
 type = "journald"
 #directory = "/var/log/journal"
 system = true
-current_user = false
+current_user = true
 unit = "foo.service"
 
 [backend.postgres-journald-foo]
@@ -53,9 +53,10 @@ username = "journald-foo"
 #password = ""
 
 [data.journal]
-frontend.name = "journal"
+frontend.name = "journal-foo"
 frontend.data_type = "wide"
 backend.name = "postgres-journald-foo"
+backend.postgres_table = "journald_foo"
 values.timestamp = { constant_value = "", postprocess = '"CURRENT_TIMESTAMP"' }
 values.message = "/MESSAGE"
 ```

@@ -81,6 +81,7 @@ pub struct JournaldConfig {
     pub current_user: bool,
     pub directory: Option<String>,
     #[serde_as(as = "OneOrMany<_, PreferOne>")]
+    #[serde(default)]
     pub unit: Vec<String>,
 }
 

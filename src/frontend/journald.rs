@@ -39,7 +39,17 @@ pub fn stream(config: JournaldConfig) -> impl Stream<Item = Value> + 'static {
         loop {
             loop {
                 match journal.next_entry() {
-                    Ok(Some(record)) => tx.blocking_send(Value::Object(record.into_iter().map(|(key, value)| (key, Value::String(value))).collect())).expect("can't blocking send journal to channel"),
+                    Ok(Some(mut record)) => {
+                        let unit1 = record.get("_UID").filter(|&uid| uid == "0")
+                            .and(record.get("OBJECT_SYSTEMD_UNIT"));
+                        let unit2 = record.get("_PID").filter(|&pid| pid == "1")
+                            .and(record.get("UNIT"));
+                        let unit3 = record.get("_SYSTEMD_UNIT");
+                        if let Some(unit) = unit1.or(unit2).or(unit3) {
+                            record.insert("__TARGET_UNIT".to_owned(), unit.clone());
+                        }
+                        tx.blocking_send(Value::Object(record.into_iter().map(|(key, value)| (key, Value::String(value))).collect())).expect("can't blocking send journal to channel")
+                    },
                     Ok(None) => break,
                     Err(e) => panic!("error reading journald entries: {e:?}"),
                 }
