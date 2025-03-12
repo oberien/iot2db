@@ -24,6 +24,7 @@ fn get_and_process_values(value: &JsonValue, mapping: &Mapping, escaper: &dyn Ba
         let (name, preprocess, postprocess) = match (config_value, &mapping.direct_values) {
             (Some((config_value_name, ConfigValue { kind: ValueKind::Pointer { .. }, preprocess, postprocess, aggregate: _ })), _) => (config_value_name.clone(), preprocess.clone(), postprocess.clone()),
             (Some((_, ConfigValue { kind: ValueKind::Constant { .. }, .. })), _) => return None,
+            (None, Some(DirectValues::All(_))) if json_pointer == "" => return None,
             (None, Some(DirectValues::All(_))) => (json_pointer_to_key(&json_pointer), None, None),
             (None, Some(DirectValues::Keys(keys))) if keys.iter().any(|k| *k == json_pointer) => (json_pointer_to_key(&json_pointer), None, None),
             _ => return None,
