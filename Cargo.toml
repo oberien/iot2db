@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-serde_json = "1.0.96"
+serde_json = "1.0.140"
 toml = "0.7.4"
 serde = { version = "1.0.163", features = ["derive"] }
 serde_with = { version = "3.0.0", features = ["indexmap"] }
@@ -17,8 +17,8 @@ async-trait = "0.1.72"
 reqwest = { version = "0.11.18", features = ["json"] }
 tokio-postgres = "0.7.8"
 postgres-protocol = "0.6.5"
-#rebo = { path = "../rebo/rebo" }
-rebo = { git = "https://github.com/oberien/rebo", rev = "4595526e4dd9b6f3ede6b9964446163edc1fa9a7" }
+#rebo = { path = "../rebo/rebo", features = ["serde_json_value"] }
+rebo = { features = ["serde_json_value"], git = "https://github.com/oberien/rebo", rev = "52b884c07ff06593e9f918d6cf98fb34f599ad81" }
 rumqttc = "0.24.0"
 indexmap = "1.9.3"
 html5ever = "0.26.0"

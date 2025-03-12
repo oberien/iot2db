@@ -104,6 +104,9 @@ pub struct DataConfig {
     pub backend: BackendRef,
     pub persistent_every_secs: Option<u32>,
     pub clean_non_persistent_after_days: Option<u32>,
+    /// rebo code taking `Value`-map, returning a boolean indicating if the value
+    /// should be processed (`true`) or discarded (`false`)
+    pub filter: Option<String>,
     #[serde(flatten)]
     pub mapping: Mapping,
 }

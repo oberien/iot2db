@@ -2,9 +2,10 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
-use futures::StreamExt;
+use futures::{future, StreamExt};
 use crate::config::{BackendConfig, BackendRef, Config, DataType};
 use rebo::{FromValue, IntoValue, ReboConfig, ReturnValue};
+use serde_json::Value as JsonValue;
 use crate::backend::{Backend, DataToInsert, Stdout};
 use crate::backend::postgres::PostgresBackend;
 use crate::data::{DataMapper, NarrowToWide, WideToWide};
@@ -90,7 +91,12 @@ async fn main() {
 
         // pipe everything into another
         let future = stream
-            .filter_map(move |value| futures::future::ready(mapper.consume_value(value)))
+            .filter(move |value| future::ready({
+                data.filter.as_ref()
+                    .map(|code| filter_rebo(code.clone(), value.clone()))
+                    .unwrap_or(false)
+            }))
+            .filter_map(move |value| future::ready(mapper.consume_value(value)))
             .map(move |values| DataToInsert { escaped_values: values, persistent_every_secs: data.persistent_every_secs })
             .for_each(move |data| {
                 let inserter = Arc::clone(&inserter);
@@ -100,7 +106,14 @@ async fn main() {
         spawn_handles.push(handle);
     }
 
-    futures::future::join_all(spawn_handles).await;
+    future::join_all(spawn_handles).await;
+}
+
+fn filter_rebo(code: String, value: JsonValue) -> bool {
+    let config = ReboConfig::new().add_external_value("values".to_string(), value);
+    let res = rebo::run_with_config("processing".to_string(), code, config);
+    let ReturnValue::Ok(value) = res.return_value else { panic!("invalid rebo code") };
+    bool::from_value(value)
 }
 
 fn run_rebo<T: FromValue + IntoValue>(code: String, value: T) -> T {
