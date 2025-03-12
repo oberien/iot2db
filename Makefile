@@ -9,6 +9,7 @@ build:
 install:
 	install -D -m 755 -o root -g root target/release/iot2db /usr/local/bin/iot2db
 	install -D -m 640 -o root -g root iot2db.service /usr/lib/systemd/system/
+	systemctl daemon-reload
 	if [ ! -f /etc/iot2db.toml ]; then install -D -m 644 -o root -g root iot2db-example.toml /etc/iot2db.toml; fi
 
 .PHONY: uninstall
