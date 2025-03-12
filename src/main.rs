@@ -94,7 +94,7 @@ async fn main() {
             .filter(move |value| future::ready({
                 data.filter.as_ref()
                     .map(|code| filter_rebo(code.clone(), value.clone()))
-                    .unwrap_or(false)
+                    .unwrap_or(true)
             }))
             .filter_map(move |value| future::ready(mapper.consume_value(value)))
             .map(move |values| DataToInsert { escaped_values: values, persistent_every_secs: data.persistent_every_secs })
