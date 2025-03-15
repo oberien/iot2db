@@ -9,6 +9,9 @@ them via Grafana or creating alerts.
 
 * Supports both standard system and user log
 * Supports directory-based logs, e.g. from `systemd-journal-remote`.
+    * If you use logs from a different machine, you must set `system = false` and `current_user = false`.
+      Contrary to systemd-journald's documentation, `system` and `current_user` filter
+      for the current machine. Using them on remote logs filters out all logs, leaving none.
 * See available values (may differ for each unit) via `journalctl -eu <unit> -o json-pretty`.
 * If services don't use structured logging, the only relevant field is `MESSAGE`.
 
