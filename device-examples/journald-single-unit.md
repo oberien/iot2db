@@ -15,6 +15,11 @@ them via Grafana or creating alerts.
 **WARNING:** Don't use this to log iot2db's output to the db. Otherwise, this
 will result in an infinite loop adding infinite entries to the db.
 
+## Fields added by iot2db
+
+* `__TARGET_UNIT`: contains the name of the unit the message is for / from
+* `__TIMESTAMP`: unix timestamp (seconds) the record
+
 ## Setup of Postgres
 
 ```sql
@@ -57,7 +62,7 @@ frontend.name = "journald-foo"
 frontend.data_type = "wide"
 backend.name = "postgres-journald-foo"
 backend.postgres_table = "journald_foo"
-values.timestamp = { constant_value = "", postprocess = '"CURRENT_TIMESTAMP"' }
+values.timestamp = "/__TIMESTAMP"
 values.message = "/MESSAGE"
 ```
 

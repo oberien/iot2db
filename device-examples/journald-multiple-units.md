@@ -24,11 +24,10 @@ REVOKE CONNECT ON DATABASE journald FROM PUBLIC;
 -- Create Tables
 SET ROLE journald;
 CREATE TABLE IF NOT EXISTS logs (
-    timestamp timestamp with time zone NOT NULL,
     data jsonb NOT NULL
 );
-CREATE INDEX ON logs (timestamp);
-CREATE INDEX ON logs (timestamp, (data->>'__TARGET_UNIT'));
+CREATE INDEX ON logs ((data->'__TIMESTAMP'));
+CREATE INDEX ON logs ((data->'__TIMESTAMP'), (data->>'__TARGET_UNIT'));
 ```
 
 ## Configuration of iot2db
@@ -56,7 +55,6 @@ backend.postgres_table = "journald"
 filter = """
     values.unwrap_object().get("__TARGET_UNIT") != Option::Some(JsonValue::String("iot2db.service"))
 """
-values.timestamp = { constant_value = "", postprocess = '"CURRENT_TIMESTAMP"' }
 values.data = ""
 ```
 

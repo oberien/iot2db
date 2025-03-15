@@ -1,4 +1,5 @@
 use std::thread;
+use std::time::UNIX_EPOCH;
 use futures::Stream;
 use serde_json::Value;
 use systemd::journal::{OpenDirectoryOptions, OpenOptions};
@@ -32,6 +33,7 @@ pub fn stream(config: JournaldConfig) -> impl Stream<Item = Value> + 'static {
             journal.match_add("OBJECT_SYSTEMD_UNIT", unit).unwrap();
             journal.match_or().unwrap();
         }
+        journal.match_flush().unwrap();
         // this seeks after the tail, where nothing new will ever be
         journal.seek_tail().unwrap();
         // thus, we need to go back to the tail where new entries will be added
@@ -48,6 +50,11 @@ pub fn stream(config: JournaldConfig) -> impl Stream<Item = Value> + 'static {
                         if let Some(unit) = unit1.or(unit2).or(unit3) {
                             record.insert("__TARGET_UNIT".to_owned(), unit.clone());
                         }
+
+                        let ts = journal.timestamp().unwrap()
+                            .duration_since(UNIX_EPOCH).unwrap().as_secs();
+                        record.insert("__TIMESTAMP".to_owned(), ts.to_string());
+
                         tx.blocking_send(Value::Object(record.into_iter().map(|(key, value)| (key, Value::String(value))).collect())).expect("can't blocking send journal to channel")
                     },
                     Ok(None) => break,
