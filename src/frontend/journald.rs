@@ -33,7 +33,6 @@ pub fn stream(config: JournaldConfig) -> impl Stream<Item = Value> + 'static {
             journal.match_add("OBJECT_SYSTEMD_UNIT", unit).unwrap();
             journal.match_or().unwrap();
         }
-        journal.match_flush().unwrap();
         // this seeks after the tail, where nothing new will ever be
         journal.seek_tail().unwrap();
         // thus, we need to go back to the tail where new entries will be added
