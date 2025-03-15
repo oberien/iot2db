@@ -37,9 +37,9 @@ REVOKE CONNECT ON DATABASE journald_foo FROM PUBLIC;
 SET ROLE journald_foo;
 CREATE TABLE IF NOT EXISTS logs (
     timestamp timestamp with time zone NOT NULL,
-    message text NOT NULL,
-    PRIMARY KEY (timestamp)
+    message text NOT NULL
 );
+CREATE INDEX on logs (timestamp);
 ```
 
 ## Configuration of iot2db
@@ -65,7 +65,7 @@ frontend.name = "journald-foo"
 frontend.data_type = "wide"
 backend.name = "postgres-journald-foo"
 backend.postgres_table = "journald_foo"
-values.timestamp = "/__TIMESTAMP"
+values.timestamp = { pointer = "/__TIMESTAMP", postprocess = 'f"to_timestamp({value})"' }
 values.message = "/MESSAGE"
 ```
 
