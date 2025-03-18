@@ -18,7 +18,7 @@ reqwest = { version = "0.11.18", features = ["json"] }
 tokio-postgres = "0.7.8"
 postgres-protocol = "0.6.5"
 #rebo = { path = "../rebo/rebo", features = ["serde_json_value"] }
-rebo = { features = ["serde_json_value"], git = "https://github.com/oberien/rebo", rev = "52b884c07ff06593e9f918d6cf98fb34f599ad81" }
+rebo = { features = ["serde_json_value"], git = "https://github.com/oberien/rebo", rev = "e098e2ab5e279783400a5e86b194934381e92c69" }
 rumqttc = "0.24.0"
 indexmap = "1.9.3"
 html5ever = "0.26.0"
